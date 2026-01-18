@@ -4,4 +4,4 @@ from .receiver import *
 from .service import *
 from .advertizer import *
 from .discoverer import *
-from .hello import *
+from .api import *
