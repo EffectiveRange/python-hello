@@ -75,12 +75,12 @@ class RespondingAdvertizer(DefaultAdvertizer):
             try:
                 query = ServiceQuery(**data)
                 matcher = ServiceMatcher(query)
-                log.debug('Hail received', group=self._group, query=query)
+                log.debug('Query received', group=self._group, query=query)
             except Exception as error:
                 log.warning('Invalid query message received', group=self._group, received=data, error=error)
 
             if matcher and matcher.matches(self._info):
-                log.info('Hail matches service', group=self._group, query=matcher.query, service=self._info)
+                log.info('Query matches service', group=self._group, query=matcher.query, service=self._info)
                 self.advertise(self._info)
 
 
