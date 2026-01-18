@@ -1,0 +1,136 @@
+import unittest
+from unittest import TestCase
+
+from context_logger import setup_logging
+from test_utility import wait_for_assertion
+from zmq import Context
+
+from hello import DefaultAdvertizer, ServiceInfo, Group, RadioSender, DishReceiver, GroupAccess, \
+    RespondingAdvertizer, ServiceQuery
+
+ACCESS_URL = 'udp://239.0.0.1:5555'
+GROUP_NAME = 'test-group'
+GROUP = Group(GROUP_NAME)
+
+
+class AdvertizerTest(TestCase):
+    SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+
+    @classmethod
+    def setUpClass(cls):
+        setup_logging('hello', 'DEBUG', warn_on_overwrite=False)
+
+    def setUp(self):
+        print()
+        self.SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+
+    def test_sends_hello_when_advertises_service(self):
+        # Given
+        context = Context()
+        sender = RadioSender(context)
+        messages = []
+
+        with DefaultAdvertizer(sender) as advertizer, DishReceiver(context) as test_receiver:
+            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_receiver.register(lambda message: messages.append(message))
+            advertizer.start(ACCESS_URL, GROUP)
+
+            # When
+            advertizer.advertise(self.SERVICE_INFO)
+
+            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+
+        # Then
+        self.assertEqual([self.SERVICE_INFO.__dict__], messages)
+
+    def test_sends_hello_when_advertises_service_and_info_changed(self):
+        # Given
+        context = Context()
+        sender = RadioSender(context)
+        messages = []
+
+        with DefaultAdvertizer(sender) as advertizer, DishReceiver(context) as test_receiver:
+            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_receiver.register(lambda message: messages.append(message))
+            advertizer.start(ACCESS_URL, GROUP)
+
+            advertizer.advertise(self.SERVICE_INFO)
+
+            self.SERVICE_INFO.url = 'http://localhost:9090'
+
+            # When
+            advertizer.advertise(self.SERVICE_INFO)
+
+            wait_for_assertion(0.1, lambda: self.assertEqual(2, len(messages)))
+
+        # Then
+        self.assertEqual([
+            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:8080'},
+            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:9090'}
+        ], messages)
+
+    def test_sends_hello_when_query_received(self):
+        # Given
+        context = Context()
+        sender = RadioSender(context)
+        receiver = DishReceiver(context)
+        messages = []
+
+        with (RespondingAdvertizer(sender, receiver) as advertizer,
+              RadioSender(context) as test_sender,
+              DishReceiver(context) as test_receiver):
+            test_sender.start(GroupAccess(ACCESS_URL, GROUP.query()))
+            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_receiver.register(lambda message: messages.append(message))
+
+            advertizer.start(ACCESS_URL, GROUP, self.SERVICE_INFO)
+
+            # When
+            test_sender.send(ServiceQuery('test-service', 'test-role'))
+
+            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+
+        # Then
+        self.assertEqual([self.SERVICE_INFO.__dict__], messages)
+
+    def test_sends_hello_when_info_changed_and_query_received(self):
+        # Given
+        context = Context()
+        sender = RadioSender(context)
+        receiver = DishReceiver(context)
+        messages = []
+
+        with (RespondingAdvertizer(sender, receiver) as advertizer,
+              RadioSender(context) as test_sender,
+              DishReceiver(context) as test_receiver):
+            test_sender.start(GroupAccess(ACCESS_URL, GROUP.query()))
+            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_receiver.register(lambda message: messages.append(message))
+
+            advertizer.start(ACCESS_URL, GROUP)
+            advertizer.advertise(self.SERVICE_INFO)
+
+            query = ServiceQuery('test-service', 'test-role')
+            test_sender.send(query)
+
+            wait_for_assertion(0.1, lambda: self.assertEqual(2, len(messages)))
+
+            self.SERVICE_INFO.url = 'http://localhost:9090'
+            advertizer.advertise(self.SERVICE_INFO)
+
+            # When
+            test_sender.send(query)
+
+            wait_for_assertion(0.1, lambda: self.assertEqual(4, len(messages)))
+
+        # Then
+        self.assertEqual([
+            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:8080'},
+            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:8080'},
+            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:9090'},
+            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:9090'}
+        ], messages)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,0 +1,7 @@
+# IntelliJ IDEA folder-specific ignored files
+/shelf/
+/workspace.xml
+/queries/
+/dataSources/
+/dataSources.local.xml
+/httpRequests/
