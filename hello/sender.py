@@ -35,9 +35,11 @@ class RadioSender(Sender):
 
     def start(self, target: GroupAccess) -> None:
         try:
+            if self._group:
+                raise RuntimeError('Sender already started')
             self._radio.connect(target.access_url)
             self._group = target.full_group
-            log.info('Sender started', address=target.access_url, group=target.full_group)
+            log.debug('Sender started', address=target.access_url, group=target.full_group)
         except Exception as error:
             log.error('Failed to start sender', address=target.access_url, group=target.full_group, error=error)
             raise error
@@ -46,7 +48,7 @@ class RadioSender(Sender):
         try:
             self._group = None
             self._radio.close()
-            log.info('Sender stopped')
+            log.debug('Sender stopped')
         except Exception as error:
             log.error('Failed to stop sender', error=error)
             raise error
@@ -57,6 +59,8 @@ class RadioSender(Sender):
                 self._send_json(data)
             else:
                 log.warning('Unsupported message type', data=data, group=self._group)
+        else:
+            log.warning('Cannot send message, sender not started', data=data)
 
     def _convert_to_dict(self, data: Any) -> dict[str, Any] | None:
         if isinstance(data, dict):

@@ -24,6 +24,19 @@ class SenderTest(TestCase):
     def setUp(self):
         print()
 
+    def test_raises_error_when_restarted(self):
+        # Given
+        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        context = Context()
+
+        with RadioSender(context) as sender:
+            sender.start(group_access)
+
+            # When, Then
+            with self.assertRaises(RuntimeError):
+                sender.start(group_access)
+
+
     def test_sends_message(self):
         # Given
         group_access = GroupAccess(ACCESS_URL, GROUP.hello())

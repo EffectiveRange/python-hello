@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from context_logger import setup_logging
 from test_utility import wait_for_assertion
-from zmq import Context, ZMQError
+from zmq import Context
 
 from hello import ServiceInfo, Group, DishReceiver, GroupAccess, RadioSender
 
@@ -31,7 +31,7 @@ class ReceiverTest(TestCase):
             receiver.start(group_access)
 
             # When, Then
-            with self.assertRaises(ZMQError):
+            with self.assertRaises(RuntimeError):
                 receiver.start(group_access)
 
     def test_receives_message(self):

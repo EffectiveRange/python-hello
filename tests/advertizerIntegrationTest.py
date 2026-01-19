@@ -1,12 +1,13 @@
 import unittest
 from unittest import TestCase
 
+from common_utility import ReusableTimer
 from context_logger import setup_logging
 from test_utility import wait_for_assertion
 from zmq import Context
 
 from hello import DefaultAdvertizer, ServiceInfo, Group, RadioSender, DishReceiver, GroupAccess, \
-    RespondingAdvertizer, ServiceQuery
+    RespondingAdvertizer, ServiceQuery, DefaultScheduledAdvertizer
 
 ACCESS_URL = 'udp://239.0.0.1:5555'
 GROUP_NAME = 'test-group'
@@ -76,7 +77,7 @@ class AdvertizerTest(TestCase):
         receiver = DishReceiver(context)
         messages = []
 
-        with (RespondingAdvertizer(sender, receiver) as advertizer,
+        with (RespondingAdvertizer(sender, receiver, 0.01) as advertizer,
               RadioSender(context) as test_sender,
               DishReceiver(context) as test_receiver):
             test_sender.start(GroupAccess(ACCESS_URL, GROUP.query()))
@@ -100,7 +101,7 @@ class AdvertizerTest(TestCase):
         receiver = DishReceiver(context)
         messages = []
 
-        with (RespondingAdvertizer(sender, receiver) as advertizer,
+        with (RespondingAdvertizer(sender, receiver, 0.01) as advertizer,
               RadioSender(context) as test_sender,
               DishReceiver(context) as test_receiver):
             test_sender.start(GroupAccess(ACCESS_URL, GROUP.query()))
@@ -130,6 +131,46 @@ class AdvertizerTest(TestCase):
             {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:9090'},
             {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:9090'}
         ], messages)
+
+    def test_sends_hello_when_schedules_advertisement_once(self):
+        # Given
+        context = Context()
+        sender = RadioSender(context)
+        _advertizer = DefaultAdvertizer(sender)
+        timer = ReusableTimer()
+        messages = []
+
+        with DefaultScheduledAdvertizer(_advertizer, timer) as advertizer, DishReceiver(context) as test_receiver:
+            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_receiver.register(lambda message: messages.append(message))
+            advertizer.start(ACCESS_URL, GROUP)
+
+            # When
+            advertizer.schedule(self.SERVICE_INFO, interval=0.01, one_shot=True)
+
+            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+
+        # Then
+        self.assertEqual([self.SERVICE_INFO.__dict__], messages)
+
+    def test_sends_hello_when_schedules_advertisement_periodically(self):
+        # Given
+        context = Context()
+        sender = RadioSender(context)
+        _advertizer = DefaultAdvertizer(sender)
+        timer = ReusableTimer()
+        messages = []
+
+        with DefaultScheduledAdvertizer(_advertizer, timer) as advertizer, DishReceiver(context) as test_receiver:
+            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_receiver.register(lambda message: messages.append(message))
+            advertizer.start(ACCESS_URL, GROUP)
+
+            # When
+            advertizer.schedule(self.SERVICE_INFO, interval=0.01)
+
+            # Then
+            wait_for_assertion(0.1, lambda: self.assertEqual(5, len(messages)))
 
 
 if __name__ == '__main__':
