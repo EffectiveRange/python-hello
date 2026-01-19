@@ -15,7 +15,7 @@ GROUP = Group(GROUP_NAME)
 
 
 class AdvertizerIntegrationTest(TestCase):
-    SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+    SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
     @classmethod
     def setUpClass(cls):
@@ -23,7 +23,7 @@ class AdvertizerIntegrationTest(TestCase):
 
     def setUp(self):
         print()
-        self.SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+        self.SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
     def test_sends_hello_when_advertises_service(self):
         # Given
@@ -90,7 +90,7 @@ class AdvertizerIntegrationTest(TestCase):
 
             wait_for_assertion(0.1, lambda: self.assertEqual(2, len(messages)))
 
-            self.SERVICE_INFO.url = 'http://localhost:9090'
+            self.SERVICE_INFO.urls['test'] = 'http://localhost:9090'
             advertizer.advertise(self.SERVICE_INFO)
 
             # When
@@ -100,10 +100,10 @@ class AdvertizerIntegrationTest(TestCase):
 
         # Then
         self.assertEqual([
-            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:8080'},
-            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:8080'},
-            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:9090'},
-            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:9090'}
+            {'name': 'test-service', 'role': 'test-role', 'urls': {'test': 'http://localhost:8080'}},
+            {'name': 'test-service', 'role': 'test-role', 'urls': {'test': 'http://localhost:8080'}},
+            {'name': 'test-service', 'role': 'test-role', 'urls': {'test': 'http://localhost:9090'}},
+            {'name': 'test-service', 'role': 'test-role', 'urls': {'test': 'http://localhost:9090'}}
         ], messages)
 
     def test_sends_hello_when_schedules_advertisement_once(self):

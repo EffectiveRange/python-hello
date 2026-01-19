@@ -15,7 +15,7 @@ SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
 
 
 class DiscovererIntegrationTest(TestCase):
-    SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+    SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
     @classmethod
     def setUpClass(cls):
@@ -23,7 +23,7 @@ class DiscovererIntegrationTest(TestCase):
 
     def setUp(self):
         print()
-        self.SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+        self.SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
     def test_discovers_service_when_hello_received(self):
         # Given
@@ -58,18 +58,18 @@ class DiscovererIntegrationTest(TestCase):
             wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
             # When
-            self.SERVICE_INFO.url = 'http://localhost:9090'
+            self.SERVICE_INFO.urls['test'] = 'http://localhost:9090'
             test_sender.send(self.SERVICE_INFO)
 
             wait_for_assertion(0.1, lambda: self.assertEqual(
                 'http://localhost:9090',
-                discoverer.get_services()[self.SERVICE_INFO.name].url
+                discoverer.get_services()[self.SERVICE_INFO.name].urls['test']
             ))
 
         # Then
         self.assertEqual(
             'http://localhost:9090',
-            discoverer.get_services()[self.SERVICE_INFO.name].url
+            discoverer.get_services()[self.SERVICE_INFO.name].urls['test']
         )
 
     def test_sends_query(self):

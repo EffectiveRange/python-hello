@@ -9,7 +9,7 @@ from hello import ServiceInfo, Group, Sender, DefaultAdvertizer, GroupAccess
 ACCESS_URL = 'udp://239.0.0.1:5555'
 GROUP_NAME = 'test-group'
 GROUP = Group(GROUP_NAME)
-SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DefaultAdvertizerTest(TestCase):
@@ -84,7 +84,7 @@ class DefaultAdvertizerTest(TestCase):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(ACCESS_URL, GROUP, ServiceInfo('test-service', 'test-role', 'http://localhost:9090'))
+        advertizer.start(ACCESS_URL, GROUP, ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:9090'}))
 
         # When
         advertizer.advertise(SERVICE_INFO)

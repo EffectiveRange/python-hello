@@ -1,12 +1,12 @@
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class ServiceInfo:
     name: str
     role: str
-    url: str
+    urls: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

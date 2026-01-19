@@ -11,7 +11,7 @@ ACCESS_URL = 'udp://239.0.0.1:5555'
 GROUP_NAME = 'test-group'
 GROUP = Group(GROUP_NAME)
 SERVICE_QUERY = ServiceQuery('test-.*', 'test-.*')
-SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DefaultDiscovererTest(TestCase):
@@ -117,7 +117,7 @@ class DefaultDiscovererTest(TestCase):
         discoverer.register(handler)
         discoverer._handle_message(SERVICE_INFO.__dict__)
         handler.reset_mock()
-        new_service_info = ServiceInfo(SERVICE_INFO.name, SERVICE_INFO.role, 'http://localhost:9090')
+        new_service_info = ServiceInfo(SERVICE_INFO.name, SERVICE_INFO.role, {'test': 'http://localhost:9090'})
 
         # When
         discoverer._handle_message(new_service_info.__dict__)
@@ -180,7 +180,7 @@ class DefaultDiscovererTest(TestCase):
         discoverer = DefaultDiscoverer(sender, receiver)
         discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
 
-        non_matching_info = ServiceInfo('other-service', 'test-role', 'http://localhost:8080')
+        non_matching_info = ServiceInfo('other-service', 'test-role', {'test': 'http://localhost:8080'})
 
         # When
         discoverer._handle_message(non_matching_info.__dict__)

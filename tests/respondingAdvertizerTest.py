@@ -9,7 +9,7 @@ from hello import ServiceInfo, Group, Sender, GroupAccess, Receiver, RespondingA
 ACCESS_URL = 'udp://239.0.0.1:5555'
 GROUP_NAME = 'test-group'
 GROUP = Group(GROUP_NAME)
-SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
+SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class RespondingAdvertizerTest(TestCase):
