@@ -14,7 +14,7 @@ GROUP = Group(GROUP_NAME)
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
 
 
-class DiscovererTest(TestCase):
+class DiscovererIntegrationTest(TestCase):
     SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
 
     @classmethod

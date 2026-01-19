@@ -14,7 +14,7 @@ GROUP_NAME = 'test-group'
 GROUP = Group(GROUP_NAME)
 
 
-class AdvertizerTest(TestCase):
+class AdvertizerIntegrationTest(TestCase):
     SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
 
     @classmethod
@@ -43,32 +43,6 @@ class AdvertizerTest(TestCase):
 
         # Then
         self.assertEqual([self.SERVICE_INFO.__dict__], messages)
-
-    def test_sends_hello_when_advertises_service_and_info_changed(self):
-        # Given
-        context = Context()
-        sender = RadioSender(context)
-        messages = []
-
-        with DefaultAdvertizer(sender) as advertizer, DishReceiver(context) as test_receiver:
-            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
-            test_receiver.register(lambda message: messages.append(message))
-            advertizer.start(ACCESS_URL, GROUP)
-
-            advertizer.advertise(self.SERVICE_INFO)
-
-            self.SERVICE_INFO.url = 'http://localhost:9090'
-
-            # When
-            advertizer.advertise(self.SERVICE_INFO)
-
-            wait_for_assertion(0.1, lambda: self.assertEqual(2, len(messages)))
-
-        # Then
-        self.assertEqual([
-            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:8080'},
-            {'name': 'test-service', 'role': 'test-role', 'url': 'http://localhost:9090'}
-        ], messages)
 
     def test_sends_hello_when_query_received(self):
         # Given

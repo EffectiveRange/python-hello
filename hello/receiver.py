@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Protocol
 
 from context_logger import get_logger
-from zmq import DISH, Poller, POLLIN, POLLOUT, Context
+from zmq import DISH, Poller, POLLIN, Context
 
 from hello import GroupAccess
 
@@ -21,10 +21,13 @@ class Receiver:
     def stop(self) -> None:
         raise NotImplementedError()
 
-    def register(self, callback: OnMessage) -> None:
+    def register(self, handler: OnMessage) -> None:
         raise NotImplementedError()
 
-    def deregister(self, callback: OnMessage) -> None:
+    def deregister(self, handler: OnMessage) -> None:
+        raise NotImplementedError()
+
+    def get_handlers(self) -> list[OnMessage]:
         raise NotImplementedError()
 
 
@@ -37,7 +40,7 @@ class DishReceiver(Receiver):
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
         self._poll_timeout = int(poll_timeout * 1000)
         self._group: str | None = None
-        self._callbacks: list[OnMessage] = []
+        self._handlers: list[OnMessage] = []
 
     def __enter__(self) -> Receiver:
         return self
@@ -53,7 +56,7 @@ class DishReceiver(Receiver):
             self._dish.bind(source.access_url)
             self._dish.join(source.full_group)
             self._group = source.full_group
-            self._executor.submit(self._handle_messages)
+            self._executor.submit(self._receive_loop)
             log.debug('Receiver started', address=source.access_url, group=source.full_group)
         except Exception as error:
             log.error('Failed to start receiver', address=source.access_url, group=source.full_group, error=error)
@@ -62,7 +65,6 @@ class DishReceiver(Receiver):
     def stop(self) -> None:
         try:
             self._group = None
-            self._poller.register(self._dish, POLLOUT)
             self._executor.shutdown()
             self._dish.close()
             log.debug('Receiver stopped')
@@ -70,13 +72,16 @@ class DishReceiver(Receiver):
             log.error('Failed to stop receiver', error=error)
             raise error
 
-    def register(self, callback: OnMessage) -> None:
-        self._callbacks.append(callback)
+    def register(self, handler: OnMessage) -> None:
+        self._handlers.append(handler)
 
-    def deregister(self, callback: OnMessage) -> None:
-        self._callbacks.remove(callback)
+    def deregister(self, handler: OnMessage) -> None:
+        self._handlers.remove(handler)
 
-    def _handle_messages(self) -> None:
+    def get_handlers(self) -> list[OnMessage]:
+        return self._handlers.copy()
+
+    def _receive_loop(self) -> None:
         while self._group:
             sockets = dict(self._poller.poll(timeout=self._poll_timeout))
             if self._dish in sockets and sockets[self._dish] == POLLIN:
@@ -88,8 +93,8 @@ class DishReceiver(Receiver):
                     log.error('Failed to receive message', group=self._group, error=error)
 
     def _handle_message(self, message: dict[str, Any]) -> None:
-        for callback in self._callbacks:
+        for handler in self._handlers:
             try:
-                callback(message)
+                handler(message)
             except Exception as error:
-                log.warn('Error in callback execution', data=message, group=self._group, error=error)
+                log.warn('Error in message handler execution', data=message, group=self._group, error=error)

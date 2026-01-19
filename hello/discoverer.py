@@ -38,10 +38,13 @@ class Discoverer:
     def get_services(self) -> dict[str, ServiceInfo]:
         raise NotImplementedError()
 
-    def register(self, callback: OnDiscoveryEvent) -> None:
+    def register(self, handler: OnDiscoveryEvent) -> None:
         raise NotImplementedError()
 
-    def deregister(self, callback: OnDiscoveryEvent) -> None:
+    def deregister(self, handler: OnDiscoveryEvent) -> None:
+        raise NotImplementedError()
+
+    def get_handlers(self) -> list[OnDiscoveryEvent]:
         raise NotImplementedError()
 
 
@@ -52,8 +55,8 @@ class DefaultDiscoverer(Discoverer):
         self._receiver = receiver
         self._group: Group | None = None
         self._matcher: ServiceMatcher | None = None
-        self._services: dict[str, ServiceInfo] = {}
-        self._callbacks: list[OnDiscoveryEvent] = []
+        self._cache: dict[str, ServiceInfo] = {}
+        self._handlers: list[OnDiscoveryEvent] = []
 
     def __enter__(self) -> Discoverer:
         return self
@@ -85,28 +88,27 @@ class DefaultDiscoverer(Discoverer):
             log.warning('Cannot discover services, discoverer not started', query=query)
 
     def get_services(self) -> dict[str, ServiceInfo]:
-        return self._services.copy()
+        return self._cache.copy()
 
-    def register(self, callback: OnDiscoveryEvent) -> None:
-        self._callbacks.append(callback)
+    def register(self, handler: OnDiscoveryEvent) -> None:
+        self._handlers.append(handler)
 
-    def deregister(self, callback: OnDiscoveryEvent) -> None:
-        self._callbacks.remove(callback)
+    def deregister(self, handler: OnDiscoveryEvent) -> None:
+        self._handlers.remove(handler)
+
+    def get_handlers(self) -> list[OnDiscoveryEvent]:
+        return self._handlers.copy()
 
     def _handle_message(self, message: dict[str, Any]) -> None:
-        service: ServiceInfo | None = None
-
         try:
             service = ServiceInfo(**message)
+            self._handle_service(service)
         except Exception as error:
             log.warn('Failed to handle received message', data=message, error=error)
 
-        if service:
-            self._handle_service(service)
-
     def _handle_service(self, service: ServiceInfo) -> None:
         if self._matcher and self._matcher.matches(service):
-            cached = self._services.get(service.name)
+            cached = self._cache.get(service.name)
 
             if event := self._create_event(cached, service):
                 self._handle_event(event)
@@ -116,17 +118,17 @@ class DefaultDiscoverer(Discoverer):
             if cached != service:
                 log.info('Service updated', old_service=cached, new_service=service)
                 return DiscoveryEvent(service, DiscoveryEventType.UPDATED)
+            else:
+                return None
         else:
             log.info('Service discovered', service=service)
             return DiscoveryEvent(service, DiscoveryEventType.DISCOVERED)
 
-        return None
-
     def _handle_event(self, event: DiscoveryEvent) -> None:
         service = event.service
-        self._services[service.name] = service
-        for callback in self._callbacks:
+        self._cache[service.name] = service
+        for callback in self._handlers:
             try:
                 callback(event)
             except Exception as error:
-                log.warn('Error in callback execution', service=service, error=error)
+                log.warn('Error in event handler execution', event=event, error=error)

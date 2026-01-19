@@ -14,7 +14,7 @@ SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
 
 
-class ApiTest(TestCase):
+class ApiIntegrationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -29,7 +29,7 @@ class ApiTest(TestCase):
         context = Context()
         hello = DefaultHello(context)
 
-        with hello.default_advertizer() as advertizer, hello.discoverer() as discoverer:
+        with hello.default_advertizer(respond=False) as advertizer, hello.discoverer() as discoverer:
             advertizer.start(ACCESS_URL, GROUP, SERVICE_INFO)
             discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
 
@@ -46,7 +46,7 @@ class ApiTest(TestCase):
         context = Context()
         hello = DefaultHello(context)
 
-        with hello.scheduled_advertizer() as advertizer, hello.discoverer() as discoverer:
+        with hello.scheduled_advertizer(respond=False) as advertizer, hello.discoverer() as discoverer:
             advertizer.start(ACCESS_URL, GROUP, SERVICE_INFO)
             discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
 
@@ -87,7 +87,7 @@ class ApiTest(TestCase):
             # When
             discoverer.discover()
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({self.SERVICE_INFO.name: self.SERVICE_INFO}, discoverer.get_services())

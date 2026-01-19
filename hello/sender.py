@@ -55,8 +55,8 @@ class RadioSender(Sender):
 
     def send(self, data: Any) -> None:
         if self._group:
-            if data := self._convert_to_dict(data):
-                self._send_json(data)
+            if message := self._convert_to_dict(data):
+                self._send_json(message)
             else:
                 log.warning('Unsupported message type', data=data, group=self._group)
         else:

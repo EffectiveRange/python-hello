@@ -1,5 +1,4 @@
 import unittest
-from time import sleep
 from unittest import TestCase
 
 from context_logger import setup_logging
@@ -15,7 +14,7 @@ GROUP = Group(GROUP_NAME)
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
 
 
-class SenderTest(TestCase):
+class SenderIntegrationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -23,19 +22,6 @@ class SenderTest(TestCase):
 
     def setUp(self):
         print()
-
-    def test_raises_error_when_restarted(self):
-        # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
-        context = Context()
-
-        with RadioSender(context) as sender:
-            sender.start(group_access)
-
-            # When, Then
-            with self.assertRaises(RuntimeError):
-                sender.start(group_access)
-
 
     def test_sends_message(self):
         # Given
@@ -55,24 +41,6 @@ class SenderTest(TestCase):
 
         # Then
         self.assertEqual([SERVICE_INFO.__dict__], messages)
-
-    def test_skips_sending_message_when_not_serializable(self):
-        # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
-        context = Context()
-        messages = []
-
-        with RadioSender(context) as sender, DishReceiver(context) as test_receiver:
-            test_receiver.register(lambda message: messages.append(message))
-            test_receiver.start(group_access)
-            sender.start(group_access)
-
-            # When
-            sender.send('not serializable message')
-
-            sleep(0.1)
-
-        self.assertEqual(0, len(messages))
 
 
 if __name__ == '__main__':

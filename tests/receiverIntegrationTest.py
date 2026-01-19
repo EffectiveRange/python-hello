@@ -13,7 +13,7 @@ GROUP = Group(GROUP_NAME)
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', 'http://localhost:8080')
 
 
-class ReceiverTest(TestCase):
+class ReceiverIntegrationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):

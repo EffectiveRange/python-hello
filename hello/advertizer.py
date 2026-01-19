@@ -117,14 +117,14 @@ class DefaultScheduledAdvertizer(ScheduledAdvertizer):
     def advertise(self, info: ServiceInfo | None = None) -> None:
         self._advertizer.advertise(info)
 
-    def schedule(self, info: ServiceInfo | None = None, interval: float = 10, one_shot: bool = False) -> None:
+    def schedule(self, info: ServiceInfo | None = None, interval: float = 60, one_shot: bool = False) -> None:
         if one_shot:
             self._timer.start(interval, self.advertise, [info])
             log.info('One-shot service advertisement scheduled', service=info, interval=interval)
         else:
-            def periodic_advertise() -> None:
-                self.advertise(info)
-                self._timer.restart()
-
-            self._timer.start(interval, periodic_advertise)
+            self._timer.start(interval, self._advertise_and_restart, [info])
             log.info('Periodic service advertisement scheduled', service=info, interval=interval)
+
+    def _advertise_and_restart(self, info: ServiceInfo | None = None) -> None:
+        self.advertise(info)
+        self._timer.restart()
