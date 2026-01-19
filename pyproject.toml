@@ -1,0 +1,27 @@
+[project]
+name = "python-hello"
+description = "A service advertizer/discovery protocol library using ZeroMQ"
+authors = [
+    { name = "Ferenc Nandor Janky & Attila Gombos", email = "info@effective-range.com" }
+]
+dependencies = [
+    "pyzmq @ git+https://github.com/EffectiveRange/pyzmq.git@v27.1.1",
+    "python-context-logger @ git+https://github.com/EffectiveRange/python-context-logger.git@latest",
+    "python-common-utility @ git+https://github.com/EffectiveRange/python-common-utility.git@latest"
+]
+dynamic = ["version"]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+packages = ["hello"]
+
+[tool.setuptools.package-data]
+hello = ["py.typed"]
+
+[build-system]
+requires = ["setuptools>=61", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"

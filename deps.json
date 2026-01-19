@@ -1,0 +1,20 @@
+{
+  "deps": [
+    {
+      "name": "libzmq-drafts",
+      "hostinstall": true
+    },
+    {
+      "name": "python3-zmq-drafts",
+      "hostinstall": true
+    },
+    {
+      "name": "python3-context-logger",
+      "hostinstall": true
+    },
+    {
+      "name": "python3-common-utility",
+      "hostinstall": true
+    }
+  ]
+}
