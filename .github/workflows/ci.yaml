@@ -14,4 +14,8 @@ on:
 
 jobs:
   call_ci:
+    permissions:
+      contents: write
+      discussions: write
+      pull-requests: write
     uses: EffectiveRange/ci-workflows/.github/workflows/python-ci.yaml@latest-python
