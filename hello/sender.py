@@ -3,14 +3,14 @@ from typing import Any, cast
 from context_logger import get_logger
 from zmq import Context, RADIO, Socket
 
-from hello import GroupAccess
+from hello import PrefixedGroup
 
 log = get_logger('Sender')
 
 
 class Sender:
 
-    def start(self, target: GroupAccess) -> None:
+    def start(self, group: PrefixedGroup) -> None:
         raise NotImplementedError()
 
     def stop(self) -> None:
@@ -33,15 +33,15 @@ class RadioSender(Sender):
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, target: GroupAccess) -> None:
+    def start(self, group: PrefixedGroup) -> None:
         try:
             if self._group:
                 raise RuntimeError('Sender already started')
-            self._radio.connect(target.access_url)
-            self._group = target.full_group
-            log.debug('Sender started', address=target.access_url, group=target.full_group)
+            self._radio.connect(group.url)
+            self._group = group.name
+            log.debug('Sender started', url=group.url, group=group.name)
         except Exception as error:
-            log.error('Failed to start sender', address=target.access_url, group=target.full_group, error=error)
+            log.error('Failed to start sender', url=group.url, group=group.name, error=error)
             raise error
 
     def stop(self) -> None:

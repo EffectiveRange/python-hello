@@ -6,12 +6,10 @@ from context_logger import setup_logging
 from test_utility import wait_for_assertion
 from zmq import Context
 
-from hello import DefaultAdvertizer, ServiceInfo, Group, RadioSender, DishReceiver, GroupAccess, \
-    RespondingAdvertizer, ServiceQuery, DefaultScheduledAdvertizer
+from hello import DefaultAdvertizer, ServiceInfo, Group, RadioSender, DishReceiver, RespondingAdvertizer, \
+    ServiceQuery, ScheduledAdvertizer
 
-ACCESS_URL = 'udp://239.0.0.1:5555'
-GROUP_NAME = 'test-group'
-GROUP = Group(GROUP_NAME)
+GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 
 
 class AdvertizerIntegrationTest(TestCase):
@@ -32,9 +30,9 @@ class AdvertizerIntegrationTest(TestCase):
         messages = []
 
         with DefaultAdvertizer(sender) as advertizer, DishReceiver(context) as test_receiver:
-            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_receiver.start(GROUP.hello())
             test_receiver.register(lambda message: messages.append(message))
-            advertizer.start(ACCESS_URL, GROUP)
+            advertizer.start(GROUP)
 
             # When
             advertizer.advertise(self.SERVICE_INFO)
@@ -54,11 +52,11 @@ class AdvertizerIntegrationTest(TestCase):
         with (RespondingAdvertizer(sender, receiver, 0.01) as advertizer,
               RadioSender(context) as test_sender,
               DishReceiver(context) as test_receiver):
-            test_sender.start(GroupAccess(ACCESS_URL, GROUP.query()))
-            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_sender.start(GROUP.query())
+            test_receiver.start(GROUP.hello())
             test_receiver.register(lambda message: messages.append(message))
 
-            advertizer.start(ACCESS_URL, GROUP, self.SERVICE_INFO)
+            advertizer.start(GROUP, self.SERVICE_INFO)
 
             # When
             test_sender.send(ServiceQuery('test-service', 'test-role'))
@@ -78,11 +76,11 @@ class AdvertizerIntegrationTest(TestCase):
         with (RespondingAdvertizer(sender, receiver, 0.01) as advertizer,
               RadioSender(context) as test_sender,
               DishReceiver(context) as test_receiver):
-            test_sender.start(GroupAccess(ACCESS_URL, GROUP.query()))
-            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+            test_sender.start(GROUP.query())
+            test_receiver.start(GROUP.hello())
             test_receiver.register(lambda message: messages.append(message))
 
-            advertizer.start(ACCESS_URL, GROUP)
+            advertizer.start(GROUP)
             advertizer.advertise(self.SERVICE_INFO)
 
             query = ServiceQuery('test-service', 'test-role')
@@ -114,10 +112,10 @@ class AdvertizerIntegrationTest(TestCase):
         timer = ReusableTimer()
         messages = []
 
-        with DefaultScheduledAdvertizer(_advertizer, timer) as advertizer, DishReceiver(context) as test_receiver:
-            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+        with ScheduledAdvertizer(_advertizer, timer) as advertizer, DishReceiver(context) as test_receiver:
+            test_receiver.start(GROUP.hello())
             test_receiver.register(lambda message: messages.append(message))
-            advertizer.start(ACCESS_URL, GROUP)
+            advertizer.start(GROUP)
 
             # When
             advertizer.schedule(self.SERVICE_INFO, interval=0.01, one_shot=True)
@@ -135,10 +133,10 @@ class AdvertizerIntegrationTest(TestCase):
         timer = ReusableTimer()
         messages = []
 
-        with DefaultScheduledAdvertizer(_advertizer, timer) as advertizer, DishReceiver(context) as test_receiver:
-            test_receiver.start(GroupAccess(ACCESS_URL, GROUP.hello()))
+        with ScheduledAdvertizer(_advertizer, timer) as advertizer, DishReceiver(context) as test_receiver:
+            test_receiver.start(GROUP.hello())
             test_receiver.register(lambda message: messages.append(message))
-            advertizer.start(ACCESS_URL, GROUP)
+            advertizer.start(GROUP)
 
             # When
             advertizer.schedule(self.SERVICE_INFO, interval=0.01)

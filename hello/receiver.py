@@ -4,7 +4,7 @@ from typing import Any, Protocol
 from context_logger import get_logger
 from zmq import DISH, Poller, POLLIN, Context
 
-from hello import GroupAccess
+from hello import PrefixedGroup
 
 log = get_logger('Receiver')
 
@@ -15,7 +15,7 @@ class OnMessage(Protocol):
 
 class Receiver:
 
-    def start(self, source: GroupAccess) -> None:
+    def start(self, group: PrefixedGroup) -> None:
         raise NotImplementedError()
 
     def stop(self) -> None:
@@ -48,18 +48,18 @@ class DishReceiver(Receiver):
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, source: GroupAccess) -> None:
+    def start(self, group: PrefixedGroup) -> None:
         try:
             if self._group:
                 raise RuntimeError('Receiver already started')
             self._poller.register(self._dish, POLLIN)
-            self._dish.bind(source.access_url)
-            self._dish.join(source.full_group)
-            self._group = source.full_group
+            self._dish.bind(group.url)
+            self._dish.join(group.name)
+            self._group = group.name
             self._executor.submit(self._receive_loop)
-            log.debug('Receiver started', address=source.access_url, group=source.full_group)
+            log.debug('Receiver started', url=group.url, group=group.name)
         except Exception as error:
-            log.error('Failed to start receiver', address=source.access_url, group=source.full_group, error=error)
+            log.error('Failed to start receiver', url=group.url, group=group.name, error=error)
             raise error
 
     def stop(self) -> None:

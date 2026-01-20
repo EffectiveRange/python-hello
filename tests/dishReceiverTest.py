@@ -6,11 +6,9 @@ from context_logger import setup_logging
 from test_utility import wait_for_assertion
 from zmq import Context, ZMQError, Poller, POLLIN
 
-from hello import ServiceInfo, Group, GroupAccess, DishReceiver, OnMessage
+from hello import ServiceInfo, Group, DishReceiver, OnMessage
 
-ACCESS_URL = 'udp://239.0.0.1:5555'
-GROUP_NAME = 'test-group'
-GROUP = Group(GROUP_NAME)
+GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
@@ -25,7 +23,7 @@ class DishReceiverTest(TestCase):
 
     def test_raises_error_when_restarted(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = MagicMock(spec=Context)
 
         with DishReceiver(context) as receiver:
@@ -37,7 +35,7 @@ class DishReceiverTest(TestCase):
 
     def test_raises_error_when_fails_to_bind_socket(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = MagicMock(spec=Context)
         context.socket.return_value.bind.side_effect = ZMQError(1, "Bind failed")
         receiver = DishReceiver(context)
@@ -48,7 +46,7 @@ class DishReceiverTest(TestCase):
 
     def test_closes_socket_on_exit(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = MagicMock(spec=Context)
 
         with DishReceiver(context) as receiver:
@@ -61,7 +59,7 @@ class DishReceiverTest(TestCase):
 
     def test_closes_socket_when_stopped(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = MagicMock(spec=Context)
         receiver = DishReceiver(context)
         receiver.start(group_access)
@@ -74,7 +72,7 @@ class DishReceiverTest(TestCase):
 
     def test_raises_error_when_fails_to_close_socket_on_stop(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = MagicMock(spec=Context)
         context.socket.return_value.close.side_effect = [ZMQError(1, "Close failed"), None]
 
@@ -112,7 +110,7 @@ class DishReceiverTest(TestCase):
 
     def test_calls_registered_handler_on_message(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = MagicMock(spec=Context)
         context.socket.return_value.recv_json.return_value = SERVICE_INFO.__dict__
         handler = MagicMock(spec=OnMessage)
@@ -132,7 +130,7 @@ class DishReceiverTest(TestCase):
 
     def test_handles_message_receive_error_gracefully(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = MagicMock(spec=Context)
         context.socket.return_value.recv_json.side_effect = ZMQError(1, "Receive failed")
         handler = MagicMock(spec=OnMessage)
@@ -152,7 +150,7 @@ class DishReceiverTest(TestCase):
 
     def test_handles_handler_execution_error_gracefully(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = MagicMock(spec=Context)
         context.socket.return_value.recv_json.return_value = SERVICE_INFO.__dict__
         handler = MagicMock(spec=OnMessage)

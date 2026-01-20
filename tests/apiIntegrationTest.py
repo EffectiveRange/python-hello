@@ -3,13 +3,10 @@ from unittest import TestCase
 
 from context_logger import setup_logging
 from test_utility import wait_for_assertion
-from zmq import Context
 
-from hello import ServiceInfo, Group, DefaultHello, ServiceQuery
+from hello import ServiceInfo, Group, ServiceQuery, Hello, HelloConfig
 
-ACCESS_URL = 'udp://239.0.0.1:5555'
-GROUP_NAME = 'test-group'
-GROUP = Group(GROUP_NAME)
+GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
 
@@ -25,12 +22,11 @@ class ApiIntegrationTest(TestCase):
 
     def test_discoverer_caches_advertised_service(self):
         # Given
-        context = Context()
-        hello = DefaultHello(context)
+        config = HelloConfig(advertizer_responder=False)
 
-        with hello.default_advertizer(respond=False) as advertizer, hello.discoverer() as discoverer:
-            advertizer.start(ACCESS_URL, GROUP, SERVICE_INFO)
-            discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        with Hello.default_advertizer(config) as advertizer, Hello.default_discoverer(config) as discoverer:
+            advertizer.start(GROUP, SERVICE_INFO)
+            discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
             advertizer.advertise()
@@ -42,12 +38,11 @@ class ApiIntegrationTest(TestCase):
 
     def test_discoverer_caches_advertised_service_when_scheduled_once(self):
         # Given
-        context = Context()
-        hello = DefaultHello(context)
+        config = HelloConfig(advertizer_responder=False)
 
-        with hello.scheduled_advertizer(respond=False) as advertizer, hello.discoverer() as discoverer:
-            advertizer.start(ACCESS_URL, GROUP, SERVICE_INFO)
-            discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        with Hello.scheduled_advertizer(config) as advertizer, Hello.default_discoverer(config) as discoverer:
+            advertizer.start(GROUP, SERVICE_INFO)
+            discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
             advertizer.schedule(interval=0.01, one_shot=True)
@@ -59,12 +54,11 @@ class ApiIntegrationTest(TestCase):
 
     def test_discoverer_caches_advertised_service_when_scheduled_periodically(self):
         # Given
-        context = Context()
-        hello = DefaultHello(context)
+        config = HelloConfig()
 
-        with hello.scheduled_advertizer() as advertizer, hello.discoverer() as discoverer:
-            advertizer.start(ACCESS_URL, GROUP, SERVICE_INFO)
-            discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        with Hello.scheduled_advertizer(config) as advertizer, Hello.default_discoverer(config) as discoverer:
+            advertizer.start(GROUP, SERVICE_INFO)
+            discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
             advertizer.schedule(interval=0.01)
@@ -76,12 +70,11 @@ class ApiIntegrationTest(TestCase):
 
     def test_discoverer_caches_discovery_response_service(self):
         # Given
-        context = Context()
-        hello = DefaultHello(context)
+        config = HelloConfig()
 
-        with hello.default_advertizer() as advertizer, hello.discoverer() as discoverer:
-            advertizer.start(ACCESS_URL, GROUP, SERVICE_INFO)
-            discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        with Hello.default_advertizer(config) as advertizer, Hello.default_discoverer(config) as discoverer:
+            advertizer.start(GROUP, SERVICE_INFO)
+            discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
             discoverer.discover()

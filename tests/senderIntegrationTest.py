@@ -5,12 +5,10 @@ from context_logger import setup_logging
 from test_utility import wait_for_assertion
 from zmq import Context
 
-from hello import ServiceInfo, Group, GroupAccess, DishReceiver
+from hello import ServiceInfo, Group, DishReceiver
 from hello.sender import RadioSender
 
-ACCESS_URL = 'udp://239.0.0.1:5555'
-GROUP_NAME = 'test-group'
-GROUP = Group(GROUP_NAME)
+GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
@@ -25,7 +23,7 @@ class SenderIntegrationTest(TestCase):
 
     def test_sends_message(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = Context()
         messages = []
 

@@ -4,11 +4,9 @@ from unittest.mock import MagicMock
 
 from context_logger import setup_logging
 
-from hello import ServiceInfo, Group, Sender, DefaultAdvertizer, GroupAccess
+from hello import ServiceInfo, Group, Sender, DefaultAdvertizer
 
-ACCESS_URL = 'udp://239.0.0.1:5555'
-GROUP_NAME = 'test-group'
-GROUP = Group(GROUP_NAME)
+GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
@@ -26,7 +24,7 @@ class DefaultAdvertizerTest(TestCase):
         sender = MagicMock(spec=Sender)
 
         with DefaultAdvertizer(sender) as advertizer:
-            advertizer.start(ACCESS_URL, GROUP)
+            advertizer.start(GROUP)
 
             # When
 
@@ -37,7 +35,7 @@ class DefaultAdvertizerTest(TestCase):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(ACCESS_URL, GROUP)
+        advertizer.start(GROUP)
 
         # When
         advertizer.stop()
@@ -51,16 +49,16 @@ class DefaultAdvertizerTest(TestCase):
         advertizer = DefaultAdvertizer(sender)
 
         # When
-        advertizer.start(ACCESS_URL, GROUP)
+        advertizer.start(GROUP)
 
         # Then
-        sender.start.assert_called_once_with(GroupAccess(ACCESS_URL, GROUP.hello()))
+        sender.start.assert_called_once_with(GROUP.hello())
 
     def test_sends_info_when_passed_at_start(self):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(ACCESS_URL, GROUP, SERVICE_INFO)
+        advertizer.start(GROUP, SERVICE_INFO)
 
         # When
         advertizer.advertise()
@@ -72,7 +70,7 @@ class DefaultAdvertizerTest(TestCase):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(ACCESS_URL, GROUP)
+        advertizer.start(GROUP)
 
         # When
         advertizer.advertise(SERVICE_INFO)
@@ -84,7 +82,7 @@ class DefaultAdvertizerTest(TestCase):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(ACCESS_URL, GROUP, ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:9090'}))
+        advertizer.start(GROUP, ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:9090'}))
 
         # When
         advertizer.advertise(SERVICE_INFO)
@@ -96,7 +94,7 @@ class DefaultAdvertizerTest(TestCase):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(ACCESS_URL, GROUP)
+        advertizer.start(GROUP)
 
         # When
         advertizer.advertise()

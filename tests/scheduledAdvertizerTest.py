@@ -5,15 +5,13 @@ from unittest.mock import MagicMock
 from common_utility import IReusableTimer
 from context_logger import setup_logging
 
-from hello import ServiceInfo, Group, DefaultScheduledAdvertizer, Advertizer
+from hello import ServiceInfo, Group, ScheduledAdvertizer, Advertizer
 
-ACCESS_URL = 'udp://239.0.0.1:5555'
-GROUP_NAME = 'test-group'
-GROUP = Group(GROUP_NAME)
+GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
-class DefaultScheduledAdvertizerTest(TestCase):
+class ScheduledAdvertizerTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -27,8 +25,8 @@ class DefaultScheduledAdvertizerTest(TestCase):
         _advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
 
-        with DefaultScheduledAdvertizer(_advertizer, timer) as advertizer:
-            advertizer.start(ACCESS_URL, GROUP)
+        with ScheduledAdvertizer(_advertizer, timer) as advertizer:
+            advertizer.start(GROUP)
 
             # When
 
@@ -40,8 +38,8 @@ class DefaultScheduledAdvertizerTest(TestCase):
         # Given
         _advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = DefaultScheduledAdvertizer(_advertizer, timer)
-        advertizer.start(ACCESS_URL, GROUP)
+        advertizer = ScheduledAdvertizer(_advertizer, timer)
+        advertizer.start(GROUP)
 
         # When
         advertizer.stop()
@@ -54,19 +52,19 @@ class DefaultScheduledAdvertizerTest(TestCase):
         # Given
         _advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = DefaultScheduledAdvertizer(_advertizer, timer)
+        advertizer = ScheduledAdvertizer(_advertizer, timer)
 
         # When
-        advertizer.start(ACCESS_URL, GROUP, SERVICE_INFO)
+        advertizer.start(GROUP, SERVICE_INFO)
 
         # Then
-        _advertizer.start.assert_called_once_with(ACCESS_URL, GROUP, SERVICE_INFO)
+        _advertizer.start.assert_called_once_with(GROUP, SERVICE_INFO)
 
     def test_sends_service_info(self):
         # Given
         _advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = DefaultScheduledAdvertizer(_advertizer, timer)
+        advertizer = ScheduledAdvertizer(_advertizer, timer)
 
         # When
         advertizer.advertise(SERVICE_INFO)
@@ -78,37 +76,37 @@ class DefaultScheduledAdvertizerTest(TestCase):
         # Given
         _advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = DefaultScheduledAdvertizer(_advertizer, timer)
-        advertizer.start(ACCESS_URL, GROUP)
+        advertizer = ScheduledAdvertizer(_advertizer, timer)
+        advertizer.start(GROUP)
 
         # When
         advertizer.schedule(SERVICE_INFO, 60, True)
 
         # Then
-        timer.start.assert_called_once_with(60, advertizer.advertise, [SERVICE_INFO])
+        timer.start.assert_called_once_with(60, advertizer._execute, [SERVICE_INFO])
 
     def test_schedules_periodic_advertise(self):
         # Given
         _advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = DefaultScheduledAdvertizer(_advertizer, timer)
-        advertizer.start(ACCESS_URL, GROUP)
+        advertizer = ScheduledAdvertizer(_advertizer, timer)
+        advertizer.start(GROUP)
 
         # When
         advertizer.schedule(SERVICE_INFO, 60, False)
 
         # Then
-        timer.start.assert_called_once_with(60, advertizer._advertise_and_restart, [SERVICE_INFO])
+        timer.start.assert_called_once_with(60, advertizer._execute_and_restart, [SERVICE_INFO])
 
-    def test_advertise_and_restart_calls_advertise_and_restarts_timer(self):
+    def test_execute_and_restart_calls_advertise_and_restarts_timer(self):
         # Given
         _advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = DefaultScheduledAdvertizer(_advertizer, timer)
-        advertizer.start(ACCESS_URL, GROUP)
+        advertizer = ScheduledAdvertizer(_advertizer, timer)
+        advertizer.start(GROUP)
 
         # When
-        advertizer._advertise_and_restart(SERVICE_INFO)
+        advertizer._execute_and_restart(SERVICE_INFO)
 
         # Then
         _advertizer.advertise.assert_called_once_with(SERVICE_INFO)
