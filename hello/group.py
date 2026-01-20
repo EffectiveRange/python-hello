@@ -7,33 +7,27 @@ class GroupPrefix(Enum):
     QUERY = 'query'
 
 
-class IGroup:
+@dataclass
+class Group:
+    name: str
+    url: str
 
-    def hello(self) -> str:
-        raise NotImplementedError()
+    def hello(self) -> 'PrefixedGroup':
+        return PrefixedGroup(self, GroupPrefix.HELLO)
 
-    def query(self) -> str:
-        raise NotImplementedError()
-
-
-class Group(IGroup):
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    def hello(self) -> str:
-        return self._prefix(GroupPrefix.HELLO)
-
-    def query(self) -> str:
-        return self._prefix(GroupPrefix.QUERY)
-
-    def _prefix(self, group_type: GroupPrefix) -> str:
-        return f'{group_type.value}:{self.name}'
-
-    def __repr__(self) -> str:
-        return self.name
+    def query(self) -> 'PrefixedGroup':
+        return PrefixedGroup(self, GroupPrefix.QUERY)
 
 
 @dataclass
-class GroupAccess:
-    access_url: str
-    full_group: str
+class PrefixedGroup:
+    group: Group
+    prefix: GroupPrefix
+
+    @property
+    def name(self) -> str:
+        return f'{self.prefix.value}:{self.group.name}'
+
+    @property
+    def url(self) -> str:
+        return self.group.url

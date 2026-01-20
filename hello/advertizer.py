@@ -5,14 +5,14 @@ from typing import Any
 from common_utility import IReusableTimer
 from context_logger import get_logger
 
-from hello import ServiceInfo, Group, Sender, GroupAccess, Receiver, ServiceMatcher, ServiceQuery
+from hello import ServiceInfo, Group, Sender, Receiver, ServiceMatcher, ServiceQuery, DefaultScheduler
 
 log = get_logger('Advertizer')
 
 
 class Advertizer:
 
-    def start(self, address: str, group: Group, info: ServiceInfo | None = None) -> None:
+    def start(self, group: Group, info: ServiceInfo | None = None) -> None:
         raise NotImplementedError()
 
     def stop(self) -> None:
@@ -35,8 +35,8 @@ class DefaultAdvertizer(Advertizer):
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, address: str, group: Group, info: ServiceInfo | None = None) -> None:
-        self._sender.start(GroupAccess(address, group.hello()))
+    def start(self, group: Group, info: ServiceInfo | None = None) -> None:
+        self._sender.start(group.hello())
         self._group = group
         self._info = info
 
@@ -62,9 +62,9 @@ class RespondingAdvertizer(DefaultAdvertizer):
         self._receiver = receiver
         self._max_delay = max_response_delay
 
-    def start(self, address: str, group: Group, info: ServiceInfo | None = None) -> None:
-        super().start(address, group, info)
-        self._receiver.start(GroupAccess(address, group.query()))
+    def start(self, group: Group, info: ServiceInfo | None = None) -> None:
+        super().start(group, info)
+        self._receiver.start(group.query())
         self._receiver.register(self._handle_message)
 
     def stop(self) -> None:
@@ -89,42 +89,27 @@ class RespondingAdvertizer(DefaultAdvertizer):
             self.advertise(info)
 
 
-class ScheduledAdvertizer(Advertizer):
-
-    def schedule(self, info: ServiceInfo | None = None, interval: float = 10, one_shot: bool = False) -> None:
-        raise NotImplementedError()
-
-
-class DefaultScheduledAdvertizer(ScheduledAdvertizer):
+class ScheduledAdvertizer(DefaultScheduler[ServiceInfo], Advertizer):
 
     def __init__(self, advertizer: Advertizer, timer: IReusableTimer) -> None:
+        super().__init__(timer)
         self._advertizer = advertizer
-        self._timer = timer
 
-    def __enter__(self) -> ScheduledAdvertizer:
+    def __enter__(self) -> 'ScheduledAdvertizer':
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, address: str, group: Group, info: ServiceInfo | None = None) -> None:
-        self._advertizer.start(address, group, info)
+    def start(self, group: Group, info: ServiceInfo | None = None) -> None:
+        self._advertizer.start(group, info)
 
     def stop(self) -> None:
-        self._timer.cancel()
+        super().stop()
         self._advertizer.stop()
 
     def advertise(self, info: ServiceInfo | None = None) -> None:
         self._advertizer.advertise(info)
 
-    def schedule(self, info: ServiceInfo | None = None, interval: float = 60, one_shot: bool = False) -> None:
-        if one_shot:
-            self._timer.start(interval, self.advertise, [info])
-            log.info('One-shot service advertisement scheduled', service=info, interval=interval)
-        else:
-            self._timer.start(interval, self._advertise_and_restart, [info])
-            log.info('Periodic service advertisement scheduled', service=info, interval=interval)
-
-    def _advertise_and_restart(self, info: ServiceInfo | None = None) -> None:
+    def _execute(self, info: ServiceInfo | None = None) -> None:
         self.advertise(info)
-        self._timer.restart()

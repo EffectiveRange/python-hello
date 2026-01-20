@@ -4,12 +4,10 @@ from unittest.mock import MagicMock
 
 from context_logger import setup_logging
 
-from hello import ServiceInfo, Group, GroupAccess, \
-    ServiceQuery, DefaultDiscoverer, Sender, Receiver, OnDiscoveryEvent, DiscoveryEventType, DiscoveryEvent
+from hello import ServiceInfo, Group, ServiceQuery, DefaultDiscoverer, Sender, Receiver, OnDiscoveryEvent, \
+    DiscoveryEventType, DiscoveryEvent
 
-ACCESS_URL = 'udp://239.0.0.1:5555'
-GROUP_NAME = 'test-group'
-GROUP = Group(GROUP_NAME)
+GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_QUERY = ServiceQuery('test-.*', 'test-.*')
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
@@ -29,7 +27,7 @@ class DefaultDiscovererTest(TestCase):
         receiver = MagicMock(spec=Receiver)
 
         with DefaultDiscoverer(sender, receiver) as discoverer:
-            discoverer.start(ACCESS_URL, GROUP)
+            discoverer.start(GROUP)
 
             # When
 
@@ -42,7 +40,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP)
+        discoverer.start(GROUP)
 
         # When
         discoverer.stop()
@@ -58,11 +56,11 @@ class DefaultDiscovererTest(TestCase):
         discoverer = DefaultDiscoverer(sender, receiver)
 
         # When
-        discoverer.start(ACCESS_URL, GROUP)
+        discoverer.start(GROUP)
 
         # Then
-        sender.start.assert_called_once_with(GroupAccess(ACCESS_URL, GROUP.query()))
-        receiver.start.assert_called_once_with(GroupAccess(ACCESS_URL, GROUP.hello()))
+        sender.start.assert_called_once_with(GROUP.query())
+        receiver.start.assert_called_once_with(GROUP.hello())
 
     def test_registers_event_handler(self):
         # Given
@@ -96,7 +94,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        discoverer.start(GROUP, SERVICE_QUERY)
         handler = MagicMock(spec=OnDiscoveryEvent)
         discoverer.register(handler)
 
@@ -112,7 +110,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        discoverer.start(GROUP, SERVICE_QUERY)
         handler = MagicMock(spec=OnDiscoveryEvent)
         discoverer.register(handler)
         discoverer._handle_message(SERVICE_INFO.__dict__)
@@ -131,7 +129,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        discoverer.start(GROUP, SERVICE_QUERY)
         handler = MagicMock(spec=OnDiscoveryEvent)
         discoverer.register(handler)
         discoverer._handle_message(SERVICE_INFO.__dict__)
@@ -148,7 +146,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        discoverer.start(GROUP, SERVICE_QUERY)
         handler = MagicMock(spec=OnDiscoveryEvent)
         handler.side_effect = Exception("Handler error")
         discoverer.register(handler)
@@ -165,7 +163,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        discoverer.start(GROUP, SERVICE_QUERY)
 
         # When
         discoverer._handle_message({'invalid': 'message'})
@@ -178,7 +176,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        discoverer.start(GROUP, SERVICE_QUERY)
 
         non_matching_info = ServiceInfo('other-service', 'test-role', {'test': 'http://localhost:8080'})
 
@@ -193,7 +191,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP)
+        discoverer.start(GROUP)
 
         # When
         discoverer._handle_message(SERVICE_INFO.__dict__)
@@ -206,7 +204,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP, SERVICE_QUERY)
+        discoverer.start(GROUP, SERVICE_QUERY)
 
         # When
         discoverer.discover()
@@ -219,7 +217,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP)
+        discoverer.start(GROUP)
 
         # When
         discoverer.discover(SERVICE_QUERY)
@@ -232,7 +230,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP, ServiceQuery('other-.*', 'test-.*'))
+        discoverer.start(GROUP, ServiceQuery('other-.*', 'test-.*'))
 
         # When
         discoverer.discover(SERVICE_QUERY)
@@ -245,7 +243,7 @@ class DefaultDiscovererTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(ACCESS_URL, GROUP)
+        discoverer.start(GROUP)
 
         # When
         discoverer.discover()

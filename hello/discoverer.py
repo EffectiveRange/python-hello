@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Protocol
 
+from common_utility import IReusableTimer
 from context_logger import get_logger
 
-from hello import Group, ServiceQuery, Sender, Receiver, GroupAccess, ServiceInfo, ServiceMatcher
+from hello import Group, ServiceQuery, Sender, Receiver, ServiceInfo, ServiceMatcher, DefaultScheduler
 
 log = get_logger('Discoverer')
 
@@ -26,7 +27,7 @@ class OnDiscoveryEvent(Protocol):
 
 class Discoverer:
 
-    def start(self, address: str, group: Group, query: ServiceQuery | None = None) -> None:
+    def start(self, group: Group, query: ServiceQuery | None = None) -> None:
         raise NotImplementedError()
 
     def stop(self) -> None:
@@ -64,13 +65,13 @@ class DefaultDiscoverer(Discoverer):
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, address: str, group: Group, query: ServiceQuery | None = None) -> None:
+    def start(self, group: Group, query: ServiceQuery | None = None) -> None:
         self._group = group
         if query:
             self._matcher = ServiceMatcher(query)
-        self._sender.start(GroupAccess(address, group.query()))
+        self._sender.start(group.query())
         self._receiver.register(self._handle_message)
-        self._receiver.start(GroupAccess(address, group.hello()))
+        self._receiver.start(group.hello())
 
     def stop(self) -> None:
         self._group = None
@@ -132,3 +133,41 @@ class DefaultDiscoverer(Discoverer):
                 callback(event)
             except Exception as error:
                 log.warn('Error in event handler execution', event=event, error=error)
+
+
+class ScheduledDiscoverer(DefaultScheduler[ServiceQuery], Discoverer):
+
+    def __init__(self, discoverer: Discoverer, timer: IReusableTimer) -> None:
+        super().__init__(timer)
+        self._discoverer = discoverer
+
+    def __enter__(self) -> 'ScheduledDiscoverer':
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.stop()
+
+    def start(self, group: Group, query: ServiceQuery | None = None) -> None:
+        self._discoverer.start(group, query)
+
+    def stop(self) -> None:
+        super().stop()
+        self._discoverer.stop()
+
+    def discover(self, query: ServiceQuery | None = None) -> None:
+        self._discoverer.discover(query)
+
+    def get_services(self) -> dict[str, ServiceInfo]:
+        return self._discoverer.get_services()
+
+    def register(self, handler: OnDiscoveryEvent) -> None:
+        self._discoverer.register(handler)
+
+    def deregister(self, handler: OnDiscoveryEvent) -> None:
+        self._discoverer.deregister(handler)
+
+    def get_handlers(self) -> list[OnDiscoveryEvent]:
+        return self._discoverer.get_handlers()
+
+    def _execute(self, query: ServiceQuery | None = None) -> None:
+        self.discover(query)

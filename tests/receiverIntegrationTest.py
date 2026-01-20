@@ -5,11 +5,9 @@ from context_logger import setup_logging
 from test_utility import wait_for_assertion
 from zmq import Context
 
-from hello import ServiceInfo, Group, DishReceiver, GroupAccess, RadioSender
+from hello import ServiceInfo, Group, DishReceiver, RadioSender
 
-ACCESS_URL = 'udp://239.0.0.1:5555'
-GROUP_NAME = 'test-group'
-GROUP = Group(GROUP_NAME)
+GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
@@ -24,7 +22,7 @@ class ReceiverIntegrationTest(TestCase):
 
     def test_raises_error_when_restarted(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = Context()
 
         with DishReceiver(context) as receiver:
@@ -36,7 +34,7 @@ class ReceiverIntegrationTest(TestCase):
 
     def test_receives_message(self):
         # Given
-        group_access = GroupAccess(ACCESS_URL, GROUP.hello())
+        group_access = GROUP.hello()
         context = Context()
         messages = []
 
