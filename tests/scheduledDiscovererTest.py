@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from common_utility import IReusableTimer
 from context_logger import setup_logging
 
-from hello import ServiceQuery, Group, ScheduledDiscoverer, Discoverer
+from hello import ServiceQuery, Group, ScheduledDiscoverer, Discoverer, OnDiscoveryEvent
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
@@ -59,6 +59,48 @@ class ScheduledDiscovererTest(TestCase):
 
         # Then
         _discoverer.start.assert_called_once_with(GROUP, SERVICE_QUERY)
+
+    def test_registers_event_handler(self):
+        # Given
+        _discoverer = MagicMock(spec=Discoverer)
+        timer = MagicMock(spec=IReusableTimer)
+        discoverer = ScheduledDiscoverer(_discoverer, timer)
+        handler = MagicMock(spec=OnDiscoveryEvent)
+
+        # When
+        discoverer.register(handler)
+
+        # Then
+        _discoverer.register.assert_called_once_with(handler)
+
+    def test_deregisters_event_handler(self):
+        # Given
+        _discoverer = MagicMock(spec=Discoverer)
+        timer = MagicMock(spec=IReusableTimer)
+        discoverer = ScheduledDiscoverer(_discoverer, timer)
+        handler = MagicMock(spec=OnDiscoveryEvent)
+        discoverer.register(handler)
+
+        # When
+        discoverer.deregister(handler)
+
+        # Then
+        _discoverer.deregister.assert_called_once_with(handler)
+
+    def test_returns_event_handlers(self):
+        # Given
+        _discoverer = MagicMock(spec=Discoverer)
+        timer = MagicMock(spec=IReusableTimer)
+        discoverer = ScheduledDiscoverer(_discoverer, timer)
+        discoverer.start(GROUP, SERVICE_QUERY)
+        handler = MagicMock(spec=OnDiscoveryEvent)
+        discoverer.register(handler)
+
+        # When
+        result = discoverer.get_handlers()
+
+        # Then
+        self.assertEqual(_discoverer.get_handlers(), result)
 
     def test_sends_service_query(self):
         # Given

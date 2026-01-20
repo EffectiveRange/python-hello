@@ -20,10 +20,6 @@ class HelloConfig:
 class Hello(object):
 
     @classmethod
-    def default_config(cls) -> HelloConfig:
-        return HelloConfig()
-
-    @classmethod
     def default_advertizer(cls, config: HelloConfig) -> DefaultAdvertizer:
         sender = RadioSender(config.context)
         if config.advertizer_responder:
@@ -49,8 +45,8 @@ class Hello(object):
         return ScheduledDiscoverer(discoverer, ReusableTimer())
 
     @classmethod
-    def builder(cls) -> 'HelloBuilder':
-        return HelloBuilder()
+    def builder(cls, config: HelloConfig | None = None) -> 'HelloBuilder':
+        return HelloBuilder(config if config else HelloConfig())
 
 
 class AdvertizerBuilder(object):
@@ -79,12 +75,8 @@ class DiscovererBuilder(object):
 
 class HelloBuilder(object):
 
-    def __init__(self) -> None:
-        self._config = Hello.default_config()
-
-    def config(self, config: HelloConfig) -> 'HelloBuilder':
+    def __init__(self, config: HelloConfig) -> None:
         self._config = config
-        return self
 
     def advertizer(self) -> AdvertizerBuilder:
         return AdvertizerBuilder(self._config)

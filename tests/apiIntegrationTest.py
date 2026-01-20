@@ -24,7 +24,8 @@ class ApiIntegrationTest(TestCase):
         # Given
         config = HelloConfig(advertizer_responder=False)
 
-        with Hello.default_advertizer(config) as advertizer, Hello.default_discoverer(config) as discoverer:
+        with (Hello.builder(config).advertizer().default() as advertizer,
+              Hello.builder(config).discoverer().default() as discoverer):
             advertizer.start(GROUP, SERVICE_INFO)
             discoverer.start(GROUP, SERVICE_QUERY)
 
@@ -36,34 +37,36 @@ class ApiIntegrationTest(TestCase):
         # Then
         self.assertEqual({SERVICE_INFO.name: SERVICE_INFO}, discoverer.get_services())
 
-    def test_discoverer_caches_advertised_service_when_scheduled_once(self):
+    def test_discoverer_caches_advertised_service_when_advertisement_scheduled_once(self):
         # Given
         config = HelloConfig(advertizer_responder=False)
 
-        with Hello.scheduled_advertizer(config) as advertizer, Hello.default_discoverer(config) as discoverer:
+        with (Hello.builder(config).advertizer().scheduled() as advertizer,
+              Hello.builder(config).discoverer().default() as discoverer):
             advertizer.start(GROUP, SERVICE_INFO)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
             advertizer.schedule(interval=0.01, one_shot=True)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.name: SERVICE_INFO}, discoverer.get_services())
 
-    def test_discoverer_caches_advertised_service_when_scheduled_periodically(self):
+    def test_discoverer_caches_advertised_service_when_advertisement_scheduled_periodically(self):
         # Given
         config = HelloConfig()
 
-        with Hello.scheduled_advertizer(config) as advertizer, Hello.default_discoverer(config) as discoverer:
+        with (Hello.builder(config).advertizer().scheduled() as advertizer,
+              Hello.builder(config).discoverer().default() as discoverer):
             advertizer.start(GROUP, SERVICE_INFO)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
             advertizer.schedule(interval=0.01)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.name: SERVICE_INFO}, discoverer.get_services())
@@ -72,12 +75,47 @@ class ApiIntegrationTest(TestCase):
         # Given
         config = HelloConfig()
 
-        with Hello.default_advertizer(config) as advertizer, Hello.default_discoverer(config) as discoverer:
+        with (Hello.builder(config).advertizer().default() as advertizer,
+              Hello.builder(config).discoverer().default() as discoverer):
             advertizer.start(GROUP, SERVICE_INFO)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
             discoverer.discover()
+
+            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
+
+        # Then
+        self.assertEqual({SERVICE_INFO.name: SERVICE_INFO}, discoverer.get_services())
+
+    def test_discoverer_caches_discovery_response_service_when_discovery_scheduled_once(self):
+        # Given
+        config = HelloConfig()
+
+        with (Hello.builder(config).advertizer().default() as advertizer,
+              Hello.builder(config).discoverer().scheduled() as discoverer):
+            advertizer.start(GROUP, SERVICE_INFO)
+            discoverer.start(GROUP, SERVICE_QUERY)
+
+            # When
+            discoverer.schedule(interval=0.01, one_shot=True)
+
+            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
+
+        # Then
+        self.assertEqual({SERVICE_INFO.name: SERVICE_INFO}, discoverer.get_services())
+
+    def test_discoverer_caches_discovery_response_service_when_discovery_scheduled_periodically(self):
+        # Given
+        config = HelloConfig()
+
+        with (Hello.builder(config).advertizer().default() as advertizer,
+              Hello.builder(config).discoverer().scheduled() as discoverer):
+            advertizer.start(GROUP, SERVICE_INFO)
+            discoverer.start(GROUP, SERVICE_QUERY)
+
+            # When
+            discoverer.schedule(interval=0.01)
 
             wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
 

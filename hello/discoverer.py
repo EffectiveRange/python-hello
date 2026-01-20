@@ -157,5 +157,17 @@ class ScheduledDiscoverer(DefaultScheduler[ServiceQuery], Discoverer):
     def discover(self, query: ServiceQuery | None = None) -> None:
         self._discoverer.discover(query)
 
+    def get_services(self) -> dict[str, ServiceInfo]:
+        return self._discoverer.get_services()
+
+    def register(self, handler: OnDiscoveryEvent) -> None:
+        self._discoverer.register(handler)
+
+    def deregister(self, handler: OnDiscoveryEvent) -> None:
+        self._discoverer.deregister(handler)
+
+    def get_handlers(self) -> list[OnDiscoveryEvent]:
+        return self._discoverer.get_handlers()
+
     def _execute(self, query: ServiceQuery | None = None) -> None:
         self.discover(query)

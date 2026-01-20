@@ -34,10 +34,10 @@ class DefaultScheduler(Scheduler[T]):
     def schedule(self, data: T | None = None, interval: float = 60, one_shot: bool = False) -> None:
         if one_shot:
             self._timer.start(interval, self._execute, [data])
-            log.info('One-shot execution scheduled', service=data, interval=interval)
+            log.info('One-shot execution scheduled', data=data, interval=interval)
         else:
             self._timer.start(interval, self._execute_and_restart, [data])
-            log.info('Periodic execution scheduled', service=data, interval=interval)
+            log.info('Periodic execution scheduled', data=data, interval=interval)
 
     def _execute(self, data: T | None = None) -> None:
         raise NotImplementedError()
