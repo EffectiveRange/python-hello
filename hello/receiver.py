@@ -33,11 +33,12 @@ class Receiver:
 
 class DishReceiver(Receiver):
 
-    def __init__(self, context: Context[Any], max_workers: int = 1, poll_timeout: float = 0.1) -> None:
+    def __init__(self, context: Context[Any], max_workers: int = 8, poll_timeout: float = 0.1) -> None:
         self._context = context
         self._dish = self._context.socket(DISH)
         self._poller = Poller()
-        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+        self._loop_executor = ThreadPoolExecutor(max_workers=1)
+        self._handler_executor = ThreadPoolExecutor(max_workers=max_workers)
         self._poll_timeout = int(poll_timeout * 1000)
         self._group: str | None = None
         self._handlers: list[OnMessage] = []
@@ -56,7 +57,7 @@ class DishReceiver(Receiver):
             self._dish.bind(group.url)
             self._dish.join(group.name)
             self._group = group.name
-            self._executor.submit(self._receive_loop)
+            self._loop_executor.submit(self._receive_loop)
             log.debug('Receiver started', url=group.url, group=group.name)
         except Exception as error:
             log.error('Failed to start receiver', url=group.url, group=group.name, error=error)
@@ -65,7 +66,7 @@ class DishReceiver(Receiver):
     def stop(self) -> None:
         try:
             self._group = None
-            self._executor.shutdown()
+            self._loop_executor.shutdown()
             self._dish.close()
             log.debug('Receiver stopped')
         except Exception as error:
@@ -83,18 +84,21 @@ class DishReceiver(Receiver):
 
     def _receive_loop(self) -> None:
         while self._group:
-            sockets = dict(self._poller.poll(timeout=self._poll_timeout))
-            if self._dish in sockets and sockets[self._dish] == POLLIN:
-                try:
-                    data = self._dish.recv_json()
-                    log.debug('Message received', data=data, group=self._group)
-                    self._handle_message(data)
-                except Exception as error:
-                    log.error('Failed to receive message', group=self._group, error=error)
+            try:
+                sockets = dict(self._poller.poll(timeout=self._poll_timeout))
+                if self._dish in sockets and sockets[self._dish] == POLLIN:
+                    message = self._dish.recv_json()
+                    self._handle_message(message)
+            except Exception as error:
+                log.error('Failed to receive message', group=self._group, error=error)
 
     def _handle_message(self, message: dict[str, Any]) -> None:
+        log.debug('Message received', data=message, group=self._group)
         for handler in self._handlers:
-            try:
-                handler(message)
-            except Exception as error:
-                log.warn('Error in message handler execution', data=message, group=self._group, error=error)
+            self._handler_executor.submit(self._execute_handler, handler, message)
+
+    def _execute_handler(self, handler: OnMessage, message: dict[str, Any]) -> None:
+        try:
+            handler(message)
+        except Exception as error:
+            log.warn('Error in message handler execution', data=message, group=self._group, error=error)

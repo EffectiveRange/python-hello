@@ -11,11 +11,11 @@ log = get_logger('CameraDiscovery')
 def main() -> None:
     shutdown_event = setup_shutdown()
 
-    # Define the group to discover camera services
+    # Define the group to discover camera services on
     group = Group(name='effectiverange/sniper', url='udp://239.0.1.1:5555')
 
-    # Define the query to discover camera services
-    query = ServiceQuery(name='.+', role='camera')
+    # Define the query to discover matching camera services
+    query = ServiceQuery(name_filter='.+', role_filter='camera')
 
     # Use a discoverer to find camera services
     with Hello.builder().discoverer().default() as discoverer:

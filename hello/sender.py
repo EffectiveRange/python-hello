@@ -46,8 +46,8 @@ class RadioSender(Sender):
 
     def stop(self) -> None:
         try:
-            self._group = None
             self._radio.close()
+            self._group = None
             log.debug('Sender stopped')
         except Exception as error:
             log.error('Failed to stop sender', error=error)
