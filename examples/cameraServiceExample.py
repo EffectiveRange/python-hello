@@ -11,7 +11,7 @@ log = get_logger('CameraService')
 def main() -> None:
     shutdown_event = setup_shutdown()
 
-    # Define the group to advertise the camera service
+    # Define the group to advertise the camera service on
     group = Group(name='effectiverange/sniper', url='udp://239.0.1.1:5555')
 
     # Define the service information for the camera

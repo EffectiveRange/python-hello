@@ -1,4 +1,5 @@
 import unittest
+from threading import Thread
 from unittest import TestCase
 
 from context_logger import setup_logging
@@ -36,6 +37,32 @@ class ApiIntegrationTest(TestCase):
 
         # Then
         self.assertEqual({SERVICE_INFO.name: SERVICE_INFO}, discoverer.get_services())
+
+    def test_discoverer_caches_advertised_services(self):
+        # Given
+        config = HelloConfig(advertizer_responder=False)
+
+        with (Hello.builder(config).advertizer().default() as advertizer1,
+              Hello.builder(config).advertizer().default() as advertizer2,
+              Hello.builder(config).discoverer().default() as discoverer):
+            service_info1 = ServiceInfo('test-service1', 'test-role', {'test': 'http://localhost:8080'})
+            service_info2 = ServiceInfo('test-service2', 'test-role', {'test': 'http://localhost:8080'})
+            advertizer1.start(GROUP, service_info1)
+            advertizer2.start(GROUP, service_info2)
+            discoverer.start(GROUP, ServiceQuery('test-service.+', 'test-role'))
+
+            # When
+            for _ in range(5):
+                Thread(target=advertizer1.advertise).start()
+                Thread(target=advertizer2.advertise).start()
+
+            wait_for_assertion(0.2, lambda: self.assertEqual(2, len(discoverer.get_services())))
+
+            # Then
+            self.assertEqual({
+                service_info1.name: service_info1,
+                service_info2.name: service_info2
+            }, discoverer.get_services())
 
     def test_discoverer_caches_advertised_service_when_advertisement_scheduled_once(self):
         # Given
@@ -83,10 +110,34 @@ class ApiIntegrationTest(TestCase):
             # When
             discoverer.discover()
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.name: SERVICE_INFO}, discoverer.get_services())
+
+    def test_discoverer_caches_discovery_response_services(self):
+        # Given
+        config = HelloConfig()
+
+        with (Hello.builder(config).advertizer().default() as advertizer1,
+              Hello.builder(config).advertizer().default() as advertizer2,
+              Hello.builder(config).discoverer().default() as discoverer):
+            service_info1 = ServiceInfo('test-service1', 'test-role', {'test': 'http://localhost:8080'})
+            service_info2 = ServiceInfo('test-service2', 'test-role', {'test': 'http://localhost:8080'})
+            advertizer1.start(GROUP, service_info1)
+            advertizer2.start(GROUP, service_info2)
+            discoverer.start(GROUP, ServiceQuery('test-service.+', 'test-role'))
+
+            # When
+            discoverer.discover()
+
+            wait_for_assertion(0.2, lambda: self.assertEqual(2, len(discoverer.get_services())))
+
+        # Then
+        self.assertEqual({
+            service_info1.name: service_info1,
+            service_info2.name: service_info2
+        }, discoverer.get_services())
 
     def test_discoverer_caches_discovery_response_service_when_discovery_scheduled_once(self):
         # Given

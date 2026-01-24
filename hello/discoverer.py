@@ -120,6 +120,7 @@ class DefaultDiscoverer(Discoverer):
                 log.info('Service updated', old_service=cached, new_service=service)
                 return DiscoveryEvent(service, DiscoveryEventType.UPDATED)
             else:
+                log.debug('Service unchanged', service=service)
                 return None
         else:
             log.info('Service discovered', service=service)

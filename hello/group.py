@@ -13,16 +13,16 @@ class Group:
     url: str
 
     def hello(self) -> 'PrefixedGroup':
-        return PrefixedGroup(self, GroupPrefix.HELLO)
+        return PrefixedGroup(GroupPrefix.HELLO, self)
 
     def query(self) -> 'PrefixedGroup':
-        return PrefixedGroup(self, GroupPrefix.QUERY)
+        return PrefixedGroup(GroupPrefix.QUERY, self)
 
 
 @dataclass
 class PrefixedGroup:
-    group: Group
     prefix: GroupPrefix
+    group: Group
 
     @property
     def name(self) -> str:
