@@ -7,13 +7,13 @@
 | hello/\_\_init\_\_.py |        8 |        0 |        0 |        0 |     100% |           |
 | hello/advertizer.py   |       79 |        0 |       10 |        0 |     100% |           |
 | hello/api.py          |       57 |        0 |        2 |        0 |     100% |           |
-| hello/discoverer.py   |      112 |        0 |       18 |        0 |     100% |           |
+| hello/discoverer.py   |      113 |        0 |       18 |        0 |     100% |           |
 | hello/group.py        |       19 |        0 |        0 |        0 |     100% |           |
-| hello/receiver.py     |       70 |        0 |        8 |        0 |     100% |           |
+| hello/receiver.py     |       73 |        0 |        8 |        0 |     100% |           |
 | hello/scheduler.py    |       27 |        0 |        2 |        0 |     100% |           |
 | hello/sender.py       |       54 |        0 |       10 |        0 |     100% |           |
 | hello/service.py      |       16 |        0 |        0 |        0 |     100% |           |
-| **TOTAL**             |  **442** |    **0** |   **50** |    **0** | **100%** |           |
+| **TOTAL**             |  **446** |    **0** |   **50** |    **0** | **100%** |           |
 
 
 ## Setup coverage badge
