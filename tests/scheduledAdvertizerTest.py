@@ -22,94 +22,94 @@ class ScheduledAdvertizerTest(TestCase):
 
     def test_stops_timer_and_advertizer_on_exit(self):
         # Given
-        _advertizer = MagicMock(spec=Advertizer)
+        advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
 
-        with ScheduledAdvertizer(_advertizer, timer) as advertizer:
-            advertizer.start(GROUP)
+        with ScheduledAdvertizer(advertizer, timer) as scheduled_advertizer:
+            scheduled_advertizer.start(GROUP)
 
             # When
 
         # Then
         timer.cancel.assert_called_once()
-        _advertizer.stop.assert_called_once()
+        advertizer.stop.assert_called_once()
 
     def test_stops_timer_and_advertizer_when_stopped(self):
         # Given
-        _advertizer = MagicMock(spec=Advertizer)
+        advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = ScheduledAdvertizer(_advertizer, timer)
-        advertizer.start(GROUP)
+        scheduled_advertizer = ScheduledAdvertizer(advertizer, timer)
+        scheduled_advertizer.start(GROUP)
 
         # When
-        advertizer.stop()
+        scheduled_advertizer.stop()
 
         # Then
         timer.cancel.assert_called_once()
-        _advertizer.stop.assert_called_once()
+        advertizer.stop.assert_called_once()
 
     def test_starts_advertizer_when_started(self):
         # Given
-        _advertizer = MagicMock(spec=Advertizer)
+        advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = ScheduledAdvertizer(_advertizer, timer)
+        scheduled_advertizer = ScheduledAdvertizer(advertizer, timer)
 
         # When
-        advertizer.start(GROUP, SERVICE_INFO)
+        scheduled_advertizer.start(GROUP, SERVICE_INFO)
 
         # Then
-        _advertizer.start.assert_called_once_with(GROUP, SERVICE_INFO)
+        advertizer.start.assert_called_once_with(GROUP, SERVICE_INFO)
 
     def test_sends_service_info(self):
         # Given
-        _advertizer = MagicMock(spec=Advertizer)
+        advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = ScheduledAdvertizer(_advertizer, timer)
+        scheduled_advertizer = ScheduledAdvertizer(advertizer, timer)
 
         # When
-        advertizer.advertise(SERVICE_INFO)
+        scheduled_advertizer.advertise(SERVICE_INFO)
 
         # Then
-        _advertizer.advertise.assert_called_once_with(SERVICE_INFO)
+        advertizer.advertise.assert_called_once_with(SERVICE_INFO)
 
     def test_schedules_advertise_once(self):
         # Given
-        _advertizer = MagicMock(spec=Advertizer)
+        advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = ScheduledAdvertizer(_advertizer, timer)
-        advertizer.start(GROUP)
+        scheduled_advertizer = ScheduledAdvertizer(advertizer, timer)
+        scheduled_advertizer.start(GROUP)
 
         # When
-        advertizer.schedule(SERVICE_INFO, 60, True)
+        scheduled_advertizer.schedule(SERVICE_INFO, 60, True)
 
         # Then
-        timer.start.assert_called_once_with(60, advertizer._execute, [SERVICE_INFO])
+        timer.start.assert_called_once_with(60, scheduled_advertizer._execute, [SERVICE_INFO])
 
     def test_schedules_periodic_advertise(self):
         # Given
-        _advertizer = MagicMock(spec=Advertizer)
+        advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = ScheduledAdvertizer(_advertizer, timer)
-        advertizer.start(GROUP)
+        scheduled_advertizer = ScheduledAdvertizer(advertizer, timer)
+        scheduled_advertizer.start(GROUP)
 
         # When
-        advertizer.schedule(SERVICE_INFO, 60, False)
+        scheduled_advertizer.schedule(SERVICE_INFO, 60, False)
 
         # Then
-        timer.start.assert_called_once_with(60, advertizer._execute_and_restart, [SERVICE_INFO])
+        timer.start.assert_called_once_with(60, scheduled_advertizer._execute_and_restart, [SERVICE_INFO])
 
     def test_execute_and_restart_calls_advertise_and_restarts_timer(self):
         # Given
-        _advertizer = MagicMock(spec=Advertizer)
+        advertizer = MagicMock(spec=Advertizer)
         timer = MagicMock(spec=IReusableTimer)
-        advertizer = ScheduledAdvertizer(_advertizer, timer)
-        advertizer.start(GROUP)
+        scheduled_advertizer = ScheduledAdvertizer(advertizer, timer)
+        scheduled_advertizer.start(GROUP)
 
         # When
-        advertizer._execute_and_restart(SERVICE_INFO)
+        scheduled_advertizer._execute_and_restart(SERVICE_INFO)
 
         # Then
-        _advertizer.advertise.assert_called_once_with(SERVICE_INFO)
+        advertizer.advertise.assert_called_once_with(SERVICE_INFO)
         timer.restart.assert_called_once()
 
 
