@@ -24,14 +24,13 @@ class SenderIntegrationTest(TestCase):
 
     def test_sends_message(self):
         # Given
-        group = GROUP.hello()
         context = Context()
-        dish = context.socket(DISH)
-        dish.bind(group.url)
-        dish.join(group.name)
         messages = []
 
-        with RadioSender(context) as sender:
+        with RadioSender(context) as sender, context.socket(DISH) as dish:
+            group = GROUP.hello()
+            dish.bind(group.url)
+            dish.join(group.name)
             sender.start(group)
             Thread(target=lambda: messages.append(dish.recv_json())).start()
 

@@ -22,13 +22,12 @@ class ReceiverIntegrationTest(TestCase):
 
     def test_receives_message(self):
         # Given
-        group = GROUP.hello()
         context = Context()
-        radio = context.socket(RADIO)
-        radio.connect(group.url)
         messages = []
 
-        with DishReceiver(context) as receiver:
+        with DishReceiver(context) as receiver, context.socket(RADIO) as radio:
+            group = GROUP.hello()
+            radio.connect(group.url)
             receiver.register(lambda message: messages.append(message))
             receiver.start(group)
 
