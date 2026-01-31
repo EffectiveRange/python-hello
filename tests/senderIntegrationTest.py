@@ -1,11 +1,12 @@
 import unittest
+from threading import Thread
 from unittest import TestCase
 
 from context_logger import setup_logging
 from test_utility import wait_for_assertion
-from zmq import Context
+from zmq import Context, DISH
 
-from hello import ServiceInfo, Group, DishReceiver
+from hello import ServiceInfo, Group
 from hello.sender import RadioSender
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
@@ -23,14 +24,15 @@ class SenderIntegrationTest(TestCase):
 
     def test_sends_message(self):
         # Given
-        group_access = GROUP.hello()
         context = Context()
         messages = []
 
-        with RadioSender(context) as sender, DishReceiver(context) as test_receiver:
-            test_receiver.register(lambda message: messages.append(message))
-            test_receiver.start(group_access)
-            sender.start(group_access)
+        with RadioSender(context) as sender, context.socket(DISH) as dish:
+            group = GROUP.hello()
+            dish.bind(group.url)
+            dish.join(group.name)
+            sender.start(group)
+            Thread(target=lambda: messages.append(dish.recv_json())).start()
 
             # When
             sender.send(SERVICE_INFO)

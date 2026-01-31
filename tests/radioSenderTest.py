@@ -23,33 +23,33 @@ class RadioSenderTest(TestCase):
 
     def test_raises_error_when_restarted(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
         sender = RadioSender(context)
-        sender.start(group_access)
+        sender.start(group)
 
         # When, Then
         with self.assertRaises(RuntimeError):
-            sender.start(group_access)
+            sender.start(group)
 
     def test_raises_error_when_fails_to_connect_socket(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
         context.socket.return_value.connect.side_effect = ZMQError(1, "Connect failed")
         sender = RadioSender(context)
 
         # When, Then
         with self.assertRaises(ZMQError):
-            sender.start(group_access)
+            sender.start(group)
 
     def test_closes_socket_on_exit(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
 
         with RadioSender(context) as sender:
-            sender.start(group_access)
+            sender.start(group)
 
             # When
 
@@ -58,10 +58,10 @@ class RadioSenderTest(TestCase):
 
     def test_closes_socket_when_stopped(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
         sender = RadioSender(context)
-        sender.start(group_access)
+        sender.start(group)
 
         # When
         sender.stop()
@@ -71,11 +71,11 @@ class RadioSenderTest(TestCase):
 
     def test_raises_error_when_fails_to_close_socket_on_stop(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
         context.socket.return_value.close.side_effect = ZMQError(1, "Close failed")
         sender = RadioSender(context)
-        sender.start(group_access)
+        sender.start(group)
 
         # When, Then
         with self.assertRaises(ZMQError):
@@ -83,10 +83,10 @@ class RadioSenderTest(TestCase):
 
     def test_sends_message_when_convertible_to_dict(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
         sender = RadioSender(context)
-        sender.start(group_access)
+        sender.start(group)
 
         # When
         sender.send(SERVICE_INFO)
@@ -96,10 +96,10 @@ class RadioSenderTest(TestCase):
 
     def test_sends_message_when_type_is_dict(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
         sender = RadioSender(context)
-        sender.start(group_access)
+        sender.start(group)
 
         # When
         sender.send(SERVICE_INFO.__dict__)
@@ -109,10 +109,10 @@ class RadioSenderTest(TestCase):
 
     def test_does_not_send_message_when_not_serializable(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
         sender = RadioSender(context)
-        sender.start(group_access)
+        sender.start(group)
 
         # When
         sender.send("not serializable message")
@@ -133,10 +133,10 @@ class RadioSenderTest(TestCase):
 
     def test_handles_send_message_error_gracefully(self):
         # Given
-        group_access = GROUP.hello()
+        group = GROUP.hello()
         context = MagicMock(spec=Context)
         sender = RadioSender(context)
-        sender.start(group_access)
+        sender.start(group)
         context.socket.return_value.send_json.side_effect = ZMQError(1, "Send failed")
 
         # When

@@ -95,17 +95,17 @@ class DiscovererIntegrationTest(TestCase):
         context = Context()
         sender = RadioSender(context)
         receiver = DishReceiver(context)
-        _discoverer = DefaultDiscoverer(sender, receiver)
+        discoverer = DefaultDiscoverer(sender, receiver)
         timer = ReusableTimer()
         messages = []
 
-        with ScheduledDiscoverer(_discoverer, timer) as discoverer, DishReceiver(context) as test_receiver:
+        with ScheduledDiscoverer(discoverer, timer) as scheduled_discoverer, DishReceiver(context) as test_receiver:
             test_receiver.start(GROUP.query())
             test_receiver.register(lambda message: messages.append(message))
-            discoverer.start(GROUP)
+            scheduled_discoverer.start(GROUP)
 
             # When
-            discoverer.schedule(SERVICE_QUERY, interval=0.01, one_shot=True)
+            scheduled_discoverer.schedule(SERVICE_QUERY, interval=0.01, one_shot=True)
 
             wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
 
@@ -117,17 +117,17 @@ class DiscovererIntegrationTest(TestCase):
         context = Context()
         sender = RadioSender(context)
         receiver = DishReceiver(context)
-        _discoverer = DefaultDiscoverer(sender, receiver)
+        discoverer = DefaultDiscoverer(sender, receiver)
         timer = ReusableTimer()
         messages = []
 
-        with ScheduledDiscoverer(_discoverer, timer) as discoverer, DishReceiver(context) as test_receiver:
+        with ScheduledDiscoverer(discoverer, timer) as scheduled_discoverer, DishReceiver(context) as test_receiver:
             test_receiver.start(GROUP.query())
             test_receiver.register(lambda message: messages.append(message))
-            discoverer.start(GROUP)
+            scheduled_discoverer.start(GROUP)
 
             # When
-            discoverer.schedule(SERVICE_QUERY, interval=0.01)
+            scheduled_discoverer.schedule(SERVICE_QUERY, interval=0.01)
 
             # Then
             wait_for_assertion(0.1, lambda: self.assertEqual(5, len(messages)))
