@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Ferenc Nandor Janky <ferenj@effective-range.com>
+# SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
+# SPDX-License-Identifier: MIT
+
 from typing import Any, cast
 
 from context_logger import get_logger
@@ -65,6 +69,10 @@ class RadioSender(Sender):
     def _convert_to_dict(self, data: Any) -> dict[str, Any] | None:
         if isinstance(data, dict):
             return data
+        elif hasattr(data, 'to_dict') and callable(getattr(data, 'to_dict')):
+            return cast(dict[str, Any], data.to_dict())
+        elif hasattr(data, 'as_dict') and callable(getattr(data, 'as_dict')):
+            return cast(dict[str, Any], data.as_dict())
         elif hasattr(data, '__dict__'):
             return cast(dict[str, Any], data.__dict__)
         return None

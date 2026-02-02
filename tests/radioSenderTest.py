@@ -1,15 +1,18 @@
 import unittest
+from typing import Any
 from unittest import TestCase
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 from context_logger import setup_logging
 from zmq import Context, ZMQError
 
-from hello import ServiceInfo, Group
+from hello import ServiceInfo, Group, ServiceQuery
 from hello.sender import RadioSender
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
 
 
 class RadioSenderTest(TestCase):
@@ -89,10 +92,43 @@ class RadioSenderTest(TestCase):
         sender.start(group)
 
         # When
+        sender.send(SERVICE_QUERY)
+
+        # Then
+        context.socket.return_value.send_json.assert_called_with(SERVICE_QUERY.__dict__, group='hello:test-group')
+
+    def test_sends_message_when_convertible_to_dict_with_to_dict(self):
+        # Given
+        group = GROUP.hello()
+        context = MagicMock(spec=Context)
+        sender = RadioSender(context)
+        sender.start(group)
+
+        # When
         sender.send(SERVICE_INFO)
 
         # Then
-        context.socket.return_value.send_json.assert_called_with(SERVICE_INFO.__dict__, group='hello:test-group')
+        context.socket.return_value.send_json.assert_called_with(SERVICE_INFO.to_dict(), group='hello:test-group')
+
+    def test_sends_message_when_convertible_to_dict_with_as_dict(self):
+        # Given
+        group = GROUP.hello()
+        context = MagicMock(spec=Context)
+        sender = RadioSender(context)
+        sender.start(group)
+
+        class TestData:
+
+            def as_dict(self) -> dict[str, Any]:
+                return SERVICE_INFO.to_dict()
+
+        data = TestData()
+
+        # When
+        sender.send(data)
+
+        # Then
+        context.socket.return_value.send_json.assert_called_with(data.as_dict(), group='hello:test-group')
 
     def test_sends_message_when_type_is_dict(self):
         # Given
@@ -102,10 +138,10 @@ class RadioSenderTest(TestCase):
         sender.start(group)
 
         # When
-        sender.send(SERVICE_INFO.__dict__)
+        sender.send(SERVICE_INFO.to_dict())
 
         # Then
-        context.socket.return_value.send_json.assert_called_with(SERVICE_INFO.__dict__, group='hello:test-group')
+        context.socket.return_value.send_json.assert_called_with(SERVICE_INFO.to_dict(), group='hello:test-group')
 
     def test_does_not_send_message_when_not_serializable(self):
         # Given
@@ -143,7 +179,7 @@ class RadioSenderTest(TestCase):
         sender.send(SERVICE_INFO)
 
         # Then
-        context.socket.return_value.send_json.assert_called_once_with(SERVICE_INFO.__dict__, group='hello:test-group')
+        context.socket.return_value.send_json.assert_called_once_with(SERVICE_INFO.to_dict(), group='hello:test-group')
 
 
 if __name__ == '__main__':

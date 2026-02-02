@@ -1,6 +1,7 @@
 import unittest
 from threading import Thread
 from unittest import TestCase
+from uuid import uuid4
 
 from context_logger import setup_logging
 from test_utility import wait_for_assertion
@@ -10,7 +11,7 @@ from hello import ServiceInfo, Group
 from hello.sender import RadioSender
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class SenderIntegrationTest(TestCase):
@@ -40,7 +41,7 @@ class SenderIntegrationTest(TestCase):
             wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
-        self.assertEqual([SERVICE_INFO.__dict__], messages)
+        self.assertEqual([SERVICE_INFO.to_dict()], messages)
 
 
 if __name__ == '__main__':

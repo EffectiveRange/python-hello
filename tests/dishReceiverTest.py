@@ -1,6 +1,7 @@
 import unittest
 from unittest import TestCase
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 from context_logger import setup_logging
 from test_utility import wait_for_assertion
@@ -9,7 +10,7 @@ from zmq import Context, ZMQError, Poller, POLLIN
 from hello import ServiceInfo, Group, DishReceiver, OnMessage
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DishReceiverTest(TestCase):
@@ -112,7 +113,7 @@ class DishReceiverTest(TestCase):
         # Given
         group = GROUP.hello()
         context = MagicMock(spec=Context)
-        context.socket.return_value.recv_json.return_value = SERVICE_INFO.__dict__
+        context.socket.return_value.recv_json.return_value = SERVICE_INFO.to_dict()
         handler = MagicMock(spec=OnMessage)
 
         with DishReceiver(context) as receiver:
@@ -126,7 +127,7 @@ class DishReceiverTest(TestCase):
             receiver.start(group)
 
             # Then
-            wait_for_assertion(0.1, lambda: handler.assert_called_once_with(SERVICE_INFO.__dict__))
+            wait_for_assertion(0.1, lambda: handler.assert_called_once_with(SERVICE_INFO.to_dict()))
 
     def test_handles_message_receive_error_gracefully(self):
         # Given
@@ -152,7 +153,7 @@ class DishReceiverTest(TestCase):
         # Given
         group = GROUP.hello()
         context = MagicMock(spec=Context)
-        context.socket.return_value.recv_json.return_value = SERVICE_INFO.__dict__
+        context.socket.return_value.recv_json.return_value = SERVICE_INFO.to_dict()
         handler = MagicMock(spec=OnMessage)
         handler.side_effect = Exception("Execution failed")
 
@@ -167,7 +168,7 @@ class DishReceiverTest(TestCase):
             receiver.start(group)
 
             # Then
-            wait_for_assertion(0.1, lambda: handler.assert_called_once_with(SERVICE_INFO.__dict__))
+            wait_for_assertion(0.1, lambda: handler.assert_called_once_with(SERVICE_INFO.to_dict()))
 
 
 if __name__ == '__main__':

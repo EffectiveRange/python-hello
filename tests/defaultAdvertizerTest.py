@@ -1,13 +1,14 @@
 import unittest
 from unittest import TestCase
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 from context_logger import setup_logging
 
 from hello import ServiceInfo, Group, Sender, DefaultAdvertizer
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DefaultAdvertizerTest(TestCase):
@@ -82,7 +83,7 @@ class DefaultAdvertizerTest(TestCase):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(GROUP, ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:9090'}))
+        advertizer.start(GROUP, ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:9090'}))
 
         # When
         advertizer.advertise(SERVICE_INFO)

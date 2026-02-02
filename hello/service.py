@@ -1,12 +1,30 @@
+# SPDX-FileCopyrightText: 2024 Ferenc Nandor Janky <ferenj@effective-range.com>
+# SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
+# SPDX-License-Identifier: MIT
+
 import re
 from dataclasses import dataclass, field
+from typing import Any
+from uuid import UUID
 
 
 @dataclass
 class ServiceInfo:
+    uuid: UUID
     name: str
     role: str
     urls: dict[str, str] = field(default_factory=dict)
+
+    def __repr__(self) -> str:
+        return f"ServiceInfo(uuid='{self.uuid}', name='{self.name}', role='{self.role}', urls='{self.urls}')"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'uuid': str(self.uuid),
+            'name': self.name,
+            'role': self.role,
+            'urls': self.urls
+        }
 
 
 @dataclass
