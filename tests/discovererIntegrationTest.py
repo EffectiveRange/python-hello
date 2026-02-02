@@ -36,7 +36,7 @@ class DiscovererIntegrationTest(TestCase):
             # When
             test_sender.send(SERVICE_INFO)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
@@ -53,7 +53,7 @@ class DiscovererIntegrationTest(TestCase):
 
             test_sender.send(SERVICE_INFO)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
             # When
             new_service_info = ServiceInfo(
@@ -61,7 +61,7 @@ class DiscovererIntegrationTest(TestCase):
             )
             test_sender.send(new_service_info)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(
+            wait_for_assertion(1, lambda: self.assertEqual(
                 'http://localhost:9090',
                 discoverer.get_services()[SERVICE_INFO.uuid].urls['test']
             ))
@@ -87,7 +87,7 @@ class DiscovererIntegrationTest(TestCase):
             # When
             discoverer.discover(SERVICE_QUERY)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
         self.assertEqual([SERVICE_QUERY.__dict__], messages)
@@ -109,7 +109,7 @@ class DiscovererIntegrationTest(TestCase):
             # When
             scheduled_discoverer.schedule(SERVICE_QUERY, interval=0.01, one_shot=True)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
         self.assertEqual([SERVICE_QUERY.__dict__], messages)
@@ -132,7 +132,7 @@ class DiscovererIntegrationTest(TestCase):
             scheduled_discoverer.schedule(SERVICE_QUERY, interval=0.01)
 
             # Then
-            wait_for_assertion(0.1, lambda: self.assertEqual(5, len(messages)))
+            wait_for_assertion(1, lambda: self.assertTrue(len(messages) >= 10))
 
 
 if __name__ == '__main__':

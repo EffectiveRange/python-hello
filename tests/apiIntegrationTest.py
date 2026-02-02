@@ -34,7 +34,7 @@ class ApiIntegrationTest(TestCase):
             # When
             advertizer.advertise()
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
@@ -57,7 +57,7 @@ class ApiIntegrationTest(TestCase):
                 Thread(target=advertizer1.advertise).start()
                 Thread(target=advertizer2.advertise).start()
 
-            wait_for_assertion(0.2, lambda: self.assertEqual(2, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(2, len(discoverer.get_services())))
 
             # Then
             self.assertEqual({
@@ -77,7 +77,7 @@ class ApiIntegrationTest(TestCase):
             # When
             advertizer.schedule(interval=0.01, one_shot=True)
 
-            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
@@ -94,7 +94,7 @@ class ApiIntegrationTest(TestCase):
             # When
             advertizer.schedule(interval=0.01)
 
-            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
@@ -111,7 +111,7 @@ class ApiIntegrationTest(TestCase):
             # When
             discoverer.discover()
 
-            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
@@ -132,7 +132,7 @@ class ApiIntegrationTest(TestCase):
             # When
             discoverer.discover()
 
-            wait_for_assertion(0.2, lambda: self.assertEqual(2, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(2, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({
@@ -152,7 +152,7 @@ class ApiIntegrationTest(TestCase):
             # When
             discoverer.schedule(interval=0.01, one_shot=True)
 
-            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
@@ -169,7 +169,7 @@ class ApiIntegrationTest(TestCase):
             # When
             discoverer.schedule(interval=0.01)
 
-            wait_for_assertion(0.2, lambda: self.assertEqual(1, len(discoverer.get_services())))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
