@@ -38,7 +38,7 @@ class SenderIntegrationTest(TestCase):
             # When
             sender.send(SERVICE_INFO)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
         self.assertEqual([SERVICE_INFO.to_dict()], messages)

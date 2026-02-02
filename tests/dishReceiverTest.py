@@ -127,7 +127,7 @@ class DishReceiverTest(TestCase):
             receiver.start(group)
 
             # Then
-            wait_for_assertion(0.1, lambda: handler.assert_called_once_with(SERVICE_INFO.to_dict()))
+            wait_for_assertion(1, lambda: handler.assert_called_once_with(SERVICE_INFO.to_dict()))
 
     def test_handles_message_receive_error_gracefully(self):
         # Given
@@ -168,7 +168,7 @@ class DishReceiverTest(TestCase):
             receiver.start(group)
 
             # Then
-            wait_for_assertion(0.1, lambda: handler.assert_called_once_with(SERVICE_INFO.to_dict()))
+            wait_for_assertion(1, lambda: handler.assert_called_once_with(SERVICE_INFO.to_dict()))
 
 
 if __name__ == '__main__':

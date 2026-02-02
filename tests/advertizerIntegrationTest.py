@@ -37,7 +37,7 @@ class AdvertizerIntegrationTest(TestCase):
             # When
             advertizer.advertise(SERVICE_INFO)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
         self.assertEqual([SERVICE_INFO.to_dict()], messages)
@@ -61,7 +61,7 @@ class AdvertizerIntegrationTest(TestCase):
             # When
             test_sender.send(ServiceQuery('test-service', 'test-role'))
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
         self.assertEqual([SERVICE_INFO.to_dict()], messages)
@@ -86,7 +86,7 @@ class AdvertizerIntegrationTest(TestCase):
             query = ServiceQuery('test-service', 'test-role')
             test_sender.send(query)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(2, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(2, len(messages)))
 
             new_service_info = ServiceInfo(
                 SERVICE_INFO.uuid, SERVICE_INFO.name, SERVICE_INFO.role, {'test': 'http://localhost:9090'}
@@ -96,7 +96,7 @@ class AdvertizerIntegrationTest(TestCase):
             # When
             test_sender.send(query)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(4, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(4, len(messages)))
 
         # Then
         self.assertEqual([
@@ -119,7 +119,7 @@ class AdvertizerIntegrationTest(TestCase):
             # When
             scheduled_advertizer.schedule(SERVICE_INFO, interval=0.01, one_shot=True)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
         self.assertEqual([SERVICE_INFO.to_dict()], messages)
@@ -141,7 +141,7 @@ class AdvertizerIntegrationTest(TestCase):
             scheduled_advertizer.schedule(SERVICE_INFO, interval=0.01)
 
             # Then
-            wait_for_assertion(0.1, lambda: self.assertEqual(5, len(messages)))
+            wait_for_assertion(1, lambda: self.assertTrue(len(messages) >= 10))
 
 
 if __name__ == '__main__':

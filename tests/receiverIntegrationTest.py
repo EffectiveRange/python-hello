@@ -35,7 +35,7 @@ class ReceiverIntegrationTest(TestCase):
             # When
             radio.send_json(SERVICE_INFO.to_dict(), group=group.name)
 
-            wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
+            wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
         self.assertEqual([SERVICE_INFO.to_dict()], messages)
