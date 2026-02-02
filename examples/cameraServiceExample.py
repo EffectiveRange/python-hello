@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from context_logger import get_logger, setup_logging
 
 from examples import setup_shutdown
@@ -15,7 +17,7 @@ def main() -> None:
     group = Group(name='effectiverange/sniper', url='udp://239.0.1.1:5555')
 
     # Define the service information for the camera
-    info = ServiceInfo(name='er-sniper-camera-1', role='camera', urls={
+    info = ServiceInfo(uuid=uuid4(), name='er-sniper-camera-1', role='camera', urls={
         'device-api': 'grpc://er-sniper-camera-1/device',
         'video-stream': 'blob:http://er-sniper-camera-1/video'
     })

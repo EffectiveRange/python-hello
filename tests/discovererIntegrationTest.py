@@ -1,5 +1,6 @@
 import unittest
 from unittest import TestCase
+from uuid import uuid4
 
 from common_utility import ReusableTimer
 from context_logger import setup_logging
@@ -10,10 +11,10 @@ from hello import ServiceInfo, Group, RadioSender, DishReceiver, ServiceQuery, D
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
+SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DiscovererIntegrationTest(TestCase):
-    SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
     @classmethod
     def setUpClass(cls):
@@ -21,7 +22,6 @@ class DiscovererIntegrationTest(TestCase):
 
     def setUp(self):
         print()
-        self.SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
     def test_discovers_service_when_hello_received(self):
         # Given
@@ -34,12 +34,12 @@ class DiscovererIntegrationTest(TestCase):
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
-            test_sender.send(self.SERVICE_INFO)
+            test_sender.send(SERVICE_INFO)
 
             wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
-        self.assertEqual({self.SERVICE_INFO.name: self.SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
 
     def test_updates_service_when_info_changed(self):
         # Given
@@ -51,23 +51,25 @@ class DiscovererIntegrationTest(TestCase):
             test_sender.start(GROUP.hello())
             discoverer.start(GROUP, SERVICE_QUERY)
 
-            test_sender.send(self.SERVICE_INFO)
+            test_sender.send(SERVICE_INFO)
 
             wait_for_assertion(0.1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
             # When
-            self.SERVICE_INFO.urls['test'] = 'http://localhost:9090'
-            test_sender.send(self.SERVICE_INFO)
+            new_service_info = ServiceInfo(
+                SERVICE_INFO.uuid, SERVICE_INFO.name, SERVICE_INFO.role, {'test': 'http://localhost:9090'}
+            )
+            test_sender.send(new_service_info)
 
             wait_for_assertion(0.1, lambda: self.assertEqual(
                 'http://localhost:9090',
-                discoverer.get_services()[self.SERVICE_INFO.name].urls['test']
+                discoverer.get_services()[SERVICE_INFO.uuid].urls['test']
             ))
 
         # Then
         self.assertEqual(
             'http://localhost:9090',
-            discoverer.get_services()[self.SERVICE_INFO.name].urls['test']
+            discoverer.get_services()[SERVICE_INFO.uuid].urls['test']
         )
 
     def test_sends_query(self):

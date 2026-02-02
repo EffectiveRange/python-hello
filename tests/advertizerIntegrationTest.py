@@ -1,5 +1,6 @@
 import unittest
 from unittest import TestCase
+from uuid import uuid4
 
 from common_utility import ReusableTimer
 from context_logger import setup_logging
@@ -10,10 +11,10 @@ from hello import DefaultAdvertizer, ServiceInfo, Group, RadioSender, DishReceiv
     ServiceQuery, ScheduledAdvertizer
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
+SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class AdvertizerIntegrationTest(TestCase):
-    SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
     @classmethod
     def setUpClass(cls):
@@ -21,7 +22,6 @@ class AdvertizerIntegrationTest(TestCase):
 
     def setUp(self):
         print()
-        self.SERVICE_INFO = ServiceInfo('test-service', 'test-role', {'test': 'http://localhost:8080'})
 
     def test_sends_hello_when_advertises_service(self):
         # Given
@@ -35,12 +35,12 @@ class AdvertizerIntegrationTest(TestCase):
             advertizer.start(GROUP)
 
             # When
-            advertizer.advertise(self.SERVICE_INFO)
+            advertizer.advertise(SERVICE_INFO)
 
             wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
-        self.assertEqual([self.SERVICE_INFO.__dict__], messages)
+        self.assertEqual([SERVICE_INFO.to_dict()], messages)
 
     def test_sends_hello_when_query_received(self):
         # Given
@@ -56,7 +56,7 @@ class AdvertizerIntegrationTest(TestCase):
             test_receiver.start(GROUP.hello())
             test_receiver.register(lambda message: messages.append(message))
 
-            advertizer.start(GROUP, self.SERVICE_INFO)
+            advertizer.start(GROUP, SERVICE_INFO)
 
             # When
             test_sender.send(ServiceQuery('test-service', 'test-role'))
@@ -64,7 +64,7 @@ class AdvertizerIntegrationTest(TestCase):
             wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
-        self.assertEqual([self.SERVICE_INFO.__dict__], messages)
+        self.assertEqual([SERVICE_INFO.to_dict()], messages)
 
     def test_sends_hello_when_info_changed_and_query_received(self):
         # Given
@@ -81,15 +81,17 @@ class AdvertizerIntegrationTest(TestCase):
             test_receiver.register(lambda message: messages.append(message))
 
             advertizer.start(GROUP)
-            advertizer.advertise(self.SERVICE_INFO)
+            advertizer.advertise(SERVICE_INFO)
 
             query = ServiceQuery('test-service', 'test-role')
             test_sender.send(query)
 
             wait_for_assertion(0.1, lambda: self.assertEqual(2, len(messages)))
 
-            self.SERVICE_INFO.urls['test'] = 'http://localhost:9090'
-            advertizer.advertise(self.SERVICE_INFO)
+            new_service_info = ServiceInfo(
+                SERVICE_INFO.uuid, SERVICE_INFO.name, SERVICE_INFO.role, {'test': 'http://localhost:9090'}
+            )
+            advertizer.advertise(new_service_info)
 
             # When
             test_sender.send(query)
@@ -98,10 +100,7 @@ class AdvertizerIntegrationTest(TestCase):
 
         # Then
         self.assertEqual([
-            {'name': 'test-service', 'role': 'test-role', 'urls': {'test': 'http://localhost:8080'}},
-            {'name': 'test-service', 'role': 'test-role', 'urls': {'test': 'http://localhost:8080'}},
-            {'name': 'test-service', 'role': 'test-role', 'urls': {'test': 'http://localhost:9090'}},
-            {'name': 'test-service', 'role': 'test-role', 'urls': {'test': 'http://localhost:9090'}}
+            SERVICE_INFO.to_dict(), SERVICE_INFO.to_dict(), new_service_info.to_dict(), new_service_info.to_dict()
         ], messages)
 
     def test_sends_hello_when_schedules_advertisement_once(self):
@@ -118,12 +117,12 @@ class AdvertizerIntegrationTest(TestCase):
             scheduled_advertizer.start(GROUP)
 
             # When
-            scheduled_advertizer.schedule(self.SERVICE_INFO, interval=0.01, one_shot=True)
+            scheduled_advertizer.schedule(SERVICE_INFO, interval=0.01, one_shot=True)
 
             wait_for_assertion(0.1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
-        self.assertEqual([self.SERVICE_INFO.__dict__], messages)
+        self.assertEqual([SERVICE_INFO.to_dict()], messages)
 
     def test_sends_hello_when_schedules_advertisement_periodically(self):
         # Given
@@ -139,7 +138,7 @@ class AdvertizerIntegrationTest(TestCase):
             scheduled_advertizer.start(GROUP)
 
             # When
-            scheduled_advertizer.schedule(self.SERVICE_INFO, interval=0.01)
+            scheduled_advertizer.schedule(SERVICE_INFO, interval=0.01)
 
             # Then
             wait_for_assertion(0.1, lambda: self.assertEqual(5, len(messages)))

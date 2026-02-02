@@ -1,6 +1,11 @@
+# SPDX-FileCopyrightText: 2024 Ferenc Nandor Janky <ferenj@effective-range.com>
+# SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
+# SPDX-License-Identifier: MIT
+
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Protocol
+from uuid import UUID
 
 from common_utility import IReusableTimer
 from context_logger import get_logger
@@ -36,7 +41,7 @@ class Discoverer:
     def discover(self, query: ServiceQuery | None = None) -> None:
         raise NotImplementedError()
 
-    def get_services(self) -> dict[str, ServiceInfo]:
+    def get_services(self) -> dict[UUID, ServiceInfo]:
         raise NotImplementedError()
 
     def register(self, handler: OnDiscoveryEvent) -> None:
@@ -56,7 +61,7 @@ class DefaultDiscoverer(Discoverer):
         self._receiver = receiver
         self._group: Group | None = None
         self._matcher: ServiceMatcher | None = None
-        self._cache: dict[str, ServiceInfo] = {}
+        self._cache: dict[UUID, ServiceInfo] = {}
         self._handlers: list[OnDiscoveryEvent] = []
 
     def __enter__(self) -> Discoverer:
@@ -88,7 +93,7 @@ class DefaultDiscoverer(Discoverer):
         else:
             log.warning('Cannot discover services, discoverer not started', query=query)
 
-    def get_services(self) -> dict[str, ServiceInfo]:
+    def get_services(self) -> dict[UUID, ServiceInfo]:
         return self._cache.copy()
 
     def register(self, handler: OnDiscoveryEvent) -> None:
@@ -102,14 +107,14 @@ class DefaultDiscoverer(Discoverer):
 
     def _handle_message(self, message: dict[str, Any]) -> None:
         try:
-            service = ServiceInfo(**message)
+            service = ServiceInfo(UUID(message['uuid']), message['name'], message['role'], message.get('urls', {}))
             self._handle_service(service)
         except Exception as error:
             log.warn('Failed to handle received message', data=message, error=error)
 
     def _handle_service(self, service: ServiceInfo) -> None:
         if self._matcher and self._matcher.matches(service):
-            cached = self._cache.get(service.name)
+            cached = self._cache.get(service.uuid)
 
             if event := self._create_event(cached, service):
                 self._handle_event(event)
@@ -128,7 +133,7 @@ class DefaultDiscoverer(Discoverer):
 
     def _handle_event(self, event: DiscoveryEvent) -> None:
         service = event.service
-        self._cache[service.name] = service
+        self._cache[service.uuid] = service
         for callback in self._handlers:
             try:
                 callback(event)
@@ -158,7 +163,7 @@ class ScheduledDiscoverer(DefaultScheduler[ServiceQuery], Discoverer):
     def discover(self, query: ServiceQuery | None = None) -> None:
         self._discoverer.discover(query)
 
-    def get_services(self) -> dict[str, ServiceInfo]:
+    def get_services(self) -> dict[UUID, ServiceInfo]:
         return self._discoverer.get_services()
 
     def register(self, handler: OnDiscoveryEvent) -> None:
