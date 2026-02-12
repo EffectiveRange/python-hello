@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
 # SPDX-License-Identifier: MIT
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Protocol
@@ -22,6 +23,8 @@ class DiscoveryEventType(Enum):
 
 @dataclass
 class DiscoveryEvent:
+    group: Group
+    query: ServiceQuery
     service: ServiceInfo
     type: DiscoveryEventType
 
@@ -41,28 +44,26 @@ class Discoverer:
     def discover(self, query: ServiceQuery | None = None) -> None:
         raise NotImplementedError()
 
-    def get_services(self) -> dict[UUID, ServiceInfo]:
-        raise NotImplementedError()
-
     def register(self, handler: OnDiscoveryEvent) -> None:
         raise NotImplementedError()
 
     def deregister(self, handler: OnDiscoveryEvent) -> None:
         raise NotImplementedError()
 
-    def get_handlers(self) -> list[OnDiscoveryEvent]:
+    def get_services(self) -> dict[UUID, ServiceInfo]:
         raise NotImplementedError()
 
 
 class DefaultDiscoverer(Discoverer):
 
-    def __init__(self, sender: Sender, receiver: Receiver) -> None:
+    def __init__(self, sender: Sender, receiver: Receiver, max_workers: int = 8) -> None:
         self._sender = sender
         self._receiver = receiver
         self._group: Group | None = None
         self._matcher: ServiceMatcher | None = None
-        self._cache: dict[UUID, ServiceInfo] = {}
+        self._services: dict[UUID, ServiceInfo] = {}
         self._handlers: list[OnDiscoveryEvent] = []
+        self._handler_executor = ThreadPoolExecutor(max_workers=max_workers)
 
     def __enter__(self) -> Discoverer:
         return self
@@ -80,21 +81,23 @@ class DefaultDiscoverer(Discoverer):
 
     def stop(self) -> None:
         self._group = None
+        self._matcher = None
         self._sender.stop()
+        self._receiver.deregister(self._handle_message)
         self._receiver.stop()
 
     def discover(self, query: ServiceQuery | None = None) -> None:
+        if query:
+            self._matcher = ServiceMatcher(query)
+
         if self._group:
-            if query:
-                self._matcher = ServiceMatcher(query)
             if self._matcher:
                 self._sender.send(self._matcher.query)
-                log.info('Service discovery initiated', query=self._matcher.query, group=self._group)
+                log.info('Service discovery initiated', group=self._group, query=self._matcher.query)
+            else:
+                log.warning('Cannot discover services, no query provided', group=self._group)
         else:
             log.warning('Cannot discover services, discoverer not started', query=query)
-
-    def get_services(self) -> dict[UUID, ServiceInfo]:
-        return self._cache.copy()
 
     def register(self, handler: OnDiscoveryEvent) -> None:
         self._handlers.append(handler)
@@ -102,43 +105,49 @@ class DefaultDiscoverer(Discoverer):
     def deregister(self, handler: OnDiscoveryEvent) -> None:
         self._handlers.remove(handler)
 
-    def get_handlers(self) -> list[OnDiscoveryEvent]:
-        return self._handlers.copy()
+    def get_services(self) -> dict[UUID, ServiceInfo]:
+        return self._services.copy()
 
     def _handle_message(self, message: dict[str, Any]) -> None:
-        try:
-            service = ServiceInfo(UUID(message['uuid']), message['name'], message['role'], message.get('urls', {}))
-            self._handle_service(service)
-        except Exception as error:
-            log.warn('Failed to handle received message', data=message, error=error)
+        if self._group and self._matcher:
+            try:
+                service = ServiceInfo(UUID(message['uuid']), message['name'], message['role'], message.get('urls', {}))
+                log.debug('Service info received', service=service, group=self._group)
+                self._handle_service(service, self._group, self._matcher)
+            except Exception as error:
+                log.warn('Invalid service info received', group=self._group, data=message, error=error)
 
-    def _handle_service(self, service: ServiceInfo) -> None:
-        if self._matcher and self._matcher.matches(service):
-            cached = self._cache.get(service.uuid)
+    def _handle_service(self, service: ServiceInfo, group: Group, matcher: ServiceMatcher) -> None:
+        if matcher.matches(service):
+            stored = self._services.get(service.uuid)
 
-            if event := self._create_event(cached, service):
+            if event := self._create_event(group, matcher, stored, service):
                 self._handle_event(event)
 
-    def _create_event(self, cached: ServiceInfo | None, service: ServiceInfo) -> DiscoveryEvent | None:
-        if cached:
-            if cached != service:
-                log.info('Service updated', old_service=cached, new_service=service)
-                return DiscoveryEvent(service, DiscoveryEventType.UPDATED)
+    def _create_event(self, group: Group, matcher: ServiceMatcher,
+                      stored: ServiceInfo | None, service: ServiceInfo) -> DiscoveryEvent | None:
+        if stored:
+            if stored != service:
+                log.info('Service updated', group=group, old_service=stored, new_service=service)
+                return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.UPDATED)
             else:
-                log.debug('Service unchanged', service=service)
+                log.debug('Service unchanged', group=group, service=service)
                 return None
         else:
-            log.info('Service discovered', service=service)
-            return DiscoveryEvent(service, DiscoveryEventType.DISCOVERED)
+            log.info('New service discovered', group=group, service=service)
+            return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.DISCOVERED)
 
     def _handle_event(self, event: DiscoveryEvent) -> None:
-        service = event.service
-        self._cache[service.uuid] = service
-        for callback in self._handlers:
-            try:
-                callback(event)
-            except Exception as error:
-                log.warn('Error in event handler execution', event=event, error=error)
+        self._services[event.service.uuid] = event.service
+
+        for handler in self._handlers:
+            self._handler_executor.submit(self._execute_handler, handler, event)
+
+    def _execute_handler(self, handler: OnDiscoveryEvent, event: DiscoveryEvent) -> None:
+        try:
+            handler(event)
+        except Exception as error:
+            log.warn('Error in event handler execution', event=event, error=error)
 
 
 class ScheduledDiscoverer(DefaultScheduler[ServiceQuery], Discoverer):
@@ -171,9 +180,6 @@ class ScheduledDiscoverer(DefaultScheduler[ServiceQuery], Discoverer):
 
     def deregister(self, handler: OnDiscoveryEvent) -> None:
         self._discoverer.deregister(handler)
-
-    def get_handlers(self) -> list[OnDiscoveryEvent]:
-        return self._discoverer.get_handlers()
 
     def _execute(self, query: ServiceQuery | None = None) -> None:
         self.discover(query)

@@ -95,7 +95,7 @@ class DishReceiverTest(TestCase):
         receiver.register(handler)
 
         # Then
-        self.assertIn(handler, receiver.get_handlers())
+        self.assertIn(handler, receiver._handlers)
 
     def test_deregisters_handler(self):
         # Given
@@ -108,7 +108,7 @@ class DishReceiverTest(TestCase):
         receiver.deregister(handler)
 
         # Then
-        self.assertNotIn(handler, receiver.get_handlers())
+        self.assertNotIn(handler, receiver._handlers)
 
     def test_calls_registered_handler_on_message(self):
         # Given

@@ -49,12 +49,15 @@ class DefaultAdvertizer(Advertizer):
         self._sender.stop()
 
     def advertise(self, info: ServiceInfo | None = None) -> None:
+        if info:
+            self._info = info
+
         if self._group:
-            if info:
-                self._info = info
             if self._info:
                 self._sender.send(self._info)
                 log.info('Service advertised', service=self._info, group=self._group)
+            else:
+                log.warning('Cannot advertise service, no service info provided', group=self._group)
         else:
             log.warning('Cannot advertise service, advertizer not started', service=info)
 
@@ -72,21 +75,22 @@ class RespondingAdvertizer(DefaultAdvertizer):
         self._receiver.register(self._handle_message)
 
     def stop(self) -> None:
-        super().stop()
+        self._receiver.deregister(self._handle_message)
         self._receiver.stop()
+        super().stop()
 
     def _handle_message(self, message: dict[str, Any]) -> None:
         if self._info:
             try:
                 query = ServiceQuery(**message)
-                log.debug('Query received', group=self._group, query=query)
-                self._handle_query(query, self._info)
+                matcher = ServiceMatcher(query)
+                log.debug('Service query received', group=self._group, query=query)
+                self._handle_query(matcher, self._info)
             except Exception as error:
-                log.warning('Invalid query message received', group=self._group, received=message, error=error)
+                log.warning('Invalid service query received', group=self._group, received=message, error=error)
 
-    def _handle_query(self, query: ServiceQuery, info: ServiceInfo) -> None:
-        matcher = ServiceMatcher(query)
-        if matcher and matcher.matches(info):
+    def _handle_query(self, matcher: ServiceMatcher, info: ServiceInfo) -> None:
+        if matcher.matches(info):
             delay = round(self._max_delay * random.random(), 3)
             log.info('Responding to query', group=self._group, query=matcher.query, service=info, delay=delay)
             time.sleep(delay)
