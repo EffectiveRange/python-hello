@@ -31,9 +31,6 @@ class Receiver:
     def deregister(self, handler: OnMessage) -> None:
         raise NotImplementedError()
 
-    def get_handlers(self) -> list[OnMessage]:
-        raise NotImplementedError()
-
 
 class DishReceiver(Receiver):
 
@@ -83,9 +80,6 @@ class DishReceiver(Receiver):
     def deregister(self, handler: OnMessage) -> None:
         self._handlers.remove(handler)
 
-    def get_handlers(self) -> list[OnMessage]:
-        return self._handlers.copy()
-
     def _receive_loop(self) -> None:
         while self._group:
             try:
@@ -105,4 +99,4 @@ class DishReceiver(Receiver):
         try:
             handler(message)
         except Exception as error:
-            log.warn('Error in message handler execution', data=message, group=self._group, error=error)
+            log.warn('Handler failed to process message', data=message, group=self._group, error=error)

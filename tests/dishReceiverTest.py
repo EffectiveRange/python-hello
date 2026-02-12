@@ -1,4 +1,5 @@
 import unittest
+from itertools import chain, repeat
 from unittest import TestCase
 from unittest.mock import MagicMock
 from uuid import uuid4
@@ -94,7 +95,7 @@ class DishReceiverTest(TestCase):
         receiver.register(handler)
 
         # Then
-        self.assertIn(handler, receiver.get_handlers())
+        self.assertIn(handler, receiver._handlers)
 
     def test_deregisters_handler(self):
         # Given
@@ -107,7 +108,7 @@ class DishReceiverTest(TestCase):
         receiver.deregister(handler)
 
         # Then
-        self.assertNotIn(handler, receiver.get_handlers())
+        self.assertNotIn(handler, receiver._handlers)
 
     def test_calls_registered_handler_on_message(self):
         # Given
@@ -118,9 +119,7 @@ class DishReceiverTest(TestCase):
 
         with DishReceiver(context) as receiver:
             receiver._poller = MagicMock(spec=Poller)
-            receiver._poller.poll.side_effect = [
-                {context.socket.return_value: POLLIN},
-            ]
+            receiver._poller.poll.side_effect = chain([{context.socket.return_value: POLLIN}], repeat({}))
             receiver.register(handler)
 
             # When
@@ -138,9 +137,7 @@ class DishReceiverTest(TestCase):
 
         with DishReceiver(context) as receiver:
             receiver._poller = MagicMock(spec=Poller)
-            receiver._poller.poll.side_effect = [
-                {context.socket.return_value: POLLIN},
-            ]
+            receiver._poller.poll.side_effect = chain([{context.socket.return_value: POLLIN}], repeat({}))
             receiver.register(handler)
 
             # When
@@ -159,9 +156,7 @@ class DishReceiverTest(TestCase):
 
         with DishReceiver(context) as receiver:
             receiver._poller = MagicMock(spec=Poller)
-            receiver._poller.poll.side_effect = [
-                {context.socket.return_value: POLLIN},
-            ]
+            receiver._poller.poll.side_effect = chain([{context.socket.return_value: POLLIN}], repeat({}))
             receiver.register(handler)
 
             # When

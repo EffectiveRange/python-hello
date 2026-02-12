@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 from context_logger import setup_logging
+from test_utility import wait_for_assertion
 
 from hello import ServiceInfo, Group, ServiceQuery, DefaultDiscoverer, Sender, Receiver, OnDiscoveryEvent, \
     DiscoveryEventType, DiscoveryEvent
@@ -74,7 +75,7 @@ class DefaultDiscovererTest(TestCase):
         discoverer.register(handler)
 
         # Then
-        self.assertIn(handler, discoverer.get_handlers())
+        self.assertIn(handler, discoverer._handlers)
 
     def test_deregisters_event_handler(self):
         # Given
@@ -88,7 +89,7 @@ class DefaultDiscovererTest(TestCase):
         discoverer.deregister(handler)
 
         # Then
-        self.assertNotIn(handler, discoverer.get_handlers())
+        self.assertNotIn(handler, discoverer._handlers)
 
     def test_caches_service_and_calls_handler_when_receives_matching_info(self):
         # Given
@@ -104,7 +105,9 @@ class DefaultDiscovererTest(TestCase):
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
-        handler.assert_called_once_with(DiscoveryEvent(SERVICE_INFO, DiscoveryEventType.DISCOVERED))
+        wait_for_assertion(1, lambda: handler.assert_called_once_with(
+            DiscoveryEvent(GROUP, SERVICE_QUERY, SERVICE_INFO, DiscoveryEventType.DISCOVERED)
+        ))
 
     def test_updates_service_and_calls_handler_when_receives_matching_info(self):
         # Given
@@ -125,7 +128,9 @@ class DefaultDiscovererTest(TestCase):
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: new_service_info}, discoverer.get_services())
-        handler.assert_called_once_with(DiscoveryEvent(new_service_info, DiscoveryEventType.UPDATED))
+        wait_for_assertion(1, lambda: handler.assert_called_once_with(
+            DiscoveryEvent(GROUP, SERVICE_QUERY, new_service_info, DiscoveryEventType.UPDATED)
+        ))
 
     def test_does_not_call_handler_when_service_info_not_changed(self):
         # Given
@@ -159,7 +164,9 @@ class DefaultDiscovererTest(TestCase):
 
         # Then
         self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
-        handler.assert_called_once_with(DiscoveryEvent(SERVICE_INFO, DiscoveryEventType.DISCOVERED))
+        wait_for_assertion(1, lambda: handler.assert_called_once_with(
+            DiscoveryEvent(GROUP, SERVICE_QUERY, SERVICE_INFO, DiscoveryEventType.DISCOVERED)
+        ))
 
     def test_handles_invalid_message_gracefully(self):
         # Given

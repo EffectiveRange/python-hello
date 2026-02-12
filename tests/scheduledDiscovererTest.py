@@ -87,21 +87,6 @@ class ScheduledDiscovererTest(TestCase):
         # Then
         discoverer.deregister.assert_called_once_with(handler)
 
-    def test_returns_event_handlers(self):
-        # Given
-        discoverer = MagicMock(spec=Discoverer)
-        timer = MagicMock(spec=IReusableTimer)
-        scheduled_discoverer = ScheduledDiscoverer(discoverer, timer)
-        scheduled_discoverer.start(GROUP, SERVICE_QUERY)
-        handler = MagicMock(spec=OnDiscoveryEvent)
-        scheduled_discoverer.register(handler)
-
-        # When
-        result = scheduled_discoverer.get_handlers()
-
-        # Then
-        self.assertEqual(discoverer.get_handlers(), result)
-
     def test_sends_service_query(self):
         # Given
         discoverer = MagicMock(spec=Discoverer)
