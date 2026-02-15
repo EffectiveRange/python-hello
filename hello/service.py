@@ -29,16 +29,16 @@ class ServiceInfo:
 
 @dataclass
 class ServiceQuery(object):
-    name_filter: str
-    role_filter: str
+    name: str
+    role: str
 
 
 class ServiceMatcher(object):
 
     def __init__(self, query: ServiceQuery) -> None:
         self.query = query
-        self._name_matcher = re.compile(self.query.name_filter)
-        self._role_matcher = re.compile(self.query.role_filter)
+        self._name_matcher = re.compile(self.query.name)
+        self._role_matcher = re.compile(self.query.role)
 
     def matches(self, info: ServiceInfo) -> bool:
         name_match = self._name_matcher.match(info.name)

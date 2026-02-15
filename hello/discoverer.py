@@ -11,7 +11,7 @@ from uuid import UUID
 from common_utility import IReusableTimer
 from context_logger import get_logger
 
-from hello import Group, ServiceQuery, Sender, Receiver, ServiceInfo, ServiceMatcher, DefaultScheduler
+from hello import Group, ServiceQuery, Sender, Receiver, ServiceInfo, ServiceMatcher, AbstractScheduler
 
 log = get_logger('Discoverer')
 
@@ -87,10 +87,9 @@ class DefaultDiscoverer(Discoverer):
         self._receiver.stop()
 
     def discover(self, query: ServiceQuery | None = None) -> None:
-        if query:
-            self._matcher = ServiceMatcher(query)
-
         if self._group:
+            if query:
+                self._matcher = ServiceMatcher(query)
             if self._matcher:
                 self._sender.send(self._matcher.query)
                 log.info('Service discovery initiated', group=self._group, query=self._matcher.query)
@@ -150,7 +149,7 @@ class DefaultDiscoverer(Discoverer):
             log.warn('Error in event handler execution', event=event, error=error)
 
 
-class ScheduledDiscoverer(DefaultScheduler[ServiceQuery], Discoverer):
+class ScheduledDiscoverer(AbstractScheduler[ServiceQuery], Discoverer):
 
     def __init__(self, discoverer: Discoverer, timer: IReusableTimer) -> None:
         super().__init__(timer)
