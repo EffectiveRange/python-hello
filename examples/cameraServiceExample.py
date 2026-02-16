@@ -31,7 +31,7 @@ def main() -> None:
         advertizer.advertise(info)
 
         # Schedule periodic advertisements every 10 seconds
-        advertizer.schedule(interval=10)
+        advertizer.schedule_periodic(interval=10)
 
         shutdown_event.wait()
 

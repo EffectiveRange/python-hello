@@ -81,10 +81,10 @@ class ScheduledAdvertizerTest(TestCase):
         scheduled_advertizer.start(GROUP)
 
         # When
-        scheduled_advertizer.schedule(SERVICE_INFO, 60, True)
+        scheduled_advertizer.schedule_one_shot(SERVICE_INFO, 60)
 
         # Then
-        timer.start.assert_called_once_with(60, scheduled_advertizer._execute, [SERVICE_INFO])
+        timer.start.assert_called_once_with(60, scheduled_advertizer._safe_execute, [SERVICE_INFO])
 
     def test_schedules_periodic_advertise(self):
         # Given
@@ -94,7 +94,7 @@ class ScheduledAdvertizerTest(TestCase):
         scheduled_advertizer.start(GROUP)
 
         # When
-        scheduled_advertizer.schedule(SERVICE_INFO, 60, False)
+        scheduled_advertizer.schedule_periodic(SERVICE_INFO, 60)
 
         # Then
         timer.start.assert_called_once_with(60, scheduled_advertizer._execute_and_restart, [SERVICE_INFO])

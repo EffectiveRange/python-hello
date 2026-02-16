@@ -107,7 +107,7 @@ class DiscovererIntegrationTest(TestCase):
             scheduled_discoverer.start(GROUP)
 
             # When
-            scheduled_discoverer.schedule(SERVICE_QUERY, interval=0.01, one_shot=True)
+            scheduled_discoverer.schedule_one_shot(SERVICE_QUERY, interval=0.01)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
@@ -129,7 +129,7 @@ class DiscovererIntegrationTest(TestCase):
             scheduled_discoverer.start(GROUP)
 
             # When
-            scheduled_discoverer.schedule(SERVICE_QUERY, interval=0.01)
+            scheduled_discoverer.schedule_periodic(SERVICE_QUERY, interval=0.01)
 
             # Then
             wait_for_assertion(1, lambda: self.assertTrue(len(messages) >= 10))

@@ -75,7 +75,7 @@ class ApiIntegrationTest(TestCase):
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
-            advertizer.schedule(interval=0.01, one_shot=True)
+            advertizer.schedule_one_shot(interval=0.01)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
@@ -92,7 +92,7 @@ class ApiIntegrationTest(TestCase):
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
-            advertizer.schedule(interval=0.01)
+            advertizer.schedule_periodic(interval=0.01)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
@@ -150,7 +150,7 @@ class ApiIntegrationTest(TestCase):
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
-            discoverer.schedule(interval=0.01, one_shot=True)
+            discoverer.schedule_one_shot(interval=0.01)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
@@ -167,7 +167,7 @@ class ApiIntegrationTest(TestCase):
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
-            discoverer.schedule(interval=0.01)
+            discoverer.schedule_periodic(interval=0.01)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 

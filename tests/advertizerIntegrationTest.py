@@ -117,7 +117,7 @@ class AdvertizerIntegrationTest(TestCase):
             scheduled_advertizer.start(GROUP)
 
             # When
-            scheduled_advertizer.schedule(SERVICE_INFO, interval=0.01, one_shot=True)
+            scheduled_advertizer.schedule_one_shot(SERVICE_INFO, interval=0.01)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
@@ -138,7 +138,7 @@ class AdvertizerIntegrationTest(TestCase):
             scheduled_advertizer.start(GROUP)
 
             # When
-            scheduled_advertizer.schedule(SERVICE_INFO, interval=0.01)
+            scheduled_advertizer.schedule_periodic(SERVICE_INFO, interval=0.01)
 
             # Then
             wait_for_assertion(1, lambda: self.assertTrue(len(messages) >= 10))
