@@ -43,7 +43,7 @@ class AbstractScheduler(Scheduler[T]):
 
     def schedule_one_shot(self, data: T | None = None, interval: float | None = None) -> None:
         interval = interval or self._interval
-        self._timer.start(interval, self._execute, [data])
+        self._timer.start(interval, self._safe_execute, [data])
         log.info('One-shot execution scheduled', data=data, interval=interval)
 
     def stop(self) -> None:
@@ -53,5 +53,11 @@ class AbstractScheduler(Scheduler[T]):
         raise NotImplementedError()
 
     def _execute_and_restart(self, data: T | None = None) -> None:
-        self._execute(data)
+        self._safe_execute(data)
         self._timer.restart()
+
+    def _safe_execute(self, data: T | None = None) -> None:
+        try:
+            self._execute(data)
+        except Exception as e:
+            log.error('Error during scheduled execution', error=e, data=data)

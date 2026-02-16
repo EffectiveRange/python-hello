@@ -84,7 +84,7 @@ class ScheduledAdvertizerTest(TestCase):
         scheduled_advertizer.schedule_one_shot(SERVICE_INFO, 60)
 
         # Then
-        timer.start.assert_called_once_with(60, scheduled_advertizer._execute, [SERVICE_INFO])
+        timer.start.assert_called_once_with(60, scheduled_advertizer._safe_execute, [SERVICE_INFO])
 
     def test_schedules_periodic_advertise(self):
         # Given

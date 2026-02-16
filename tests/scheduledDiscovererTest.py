@@ -110,7 +110,7 @@ class ScheduledDiscovererTest(TestCase):
         scheduled_discoverer.schedule_one_shot(SERVICE_QUERY, 60)
 
         # Then
-        timer.start.assert_called_once_with(60, scheduled_discoverer._execute, [SERVICE_QUERY])
+        timer.start.assert_called_once_with(60, scheduled_discoverer._safe_execute, [SERVICE_QUERY])
 
     def test_schedules_periodic_discover(self):
         # Given

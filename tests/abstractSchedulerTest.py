@@ -50,7 +50,7 @@ class AbstractSchedulerTest(TestCase):
         scheduler.schedule_one_shot(data, 60)
 
         # Then
-        timer.start.assert_called_once_with(60, scheduler._execute, [data])
+        timer.start.assert_called_once_with(60, scheduler._safe_execute, [data])
 
     def test_schedules_execution_once_with_default_interval(self):
         # Given
@@ -62,7 +62,7 @@ class AbstractSchedulerTest(TestCase):
         scheduler.schedule_one_shot(data)
 
         # Then
-        timer.start.assert_called_once_with(10, scheduler._execute, [data])
+        timer.start.assert_called_once_with(10, scheduler._safe_execute, [data])
 
     def test_schedules_execution_periodically(self):
         # Given
@@ -99,6 +99,19 @@ class AbstractSchedulerTest(TestCase):
 
         # Then
         timer.restart.assert_called_once()
+
+    def test_handles_exception_in_execute(self):
+        # Given
+        timer = MagicMock(spec=IReusableTimer)
+        scheduler = TestScheduler(timer)
+        data = MagicMock()
+        scheduler._execute = MagicMock(side_effect=Exception('Test exception'))
+
+        # When
+        scheduler._safe_execute(data)
+
+        # Then
+        scheduler._execute.assert_called_once_with(data)
 
 
 class TestScheduler(AbstractScheduler[Any]):
