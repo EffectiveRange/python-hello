@@ -9,7 +9,7 @@ from typing import Any
 from common_utility import IReusableTimer
 from context_logger import get_logger
 
-from hello import ServiceInfo, Group, Sender, Receiver, ServiceMatcher, ServiceQuery, DefaultScheduler
+from hello import ServiceInfo, Group, Sender, Receiver, ServiceMatcher, ServiceQuery, AbstractScheduler
 
 log = get_logger('Advertizer')
 
@@ -49,10 +49,9 @@ class DefaultAdvertizer(Advertizer):
         self._sender.stop()
 
     def advertise(self, info: ServiceInfo | None = None) -> None:
-        if info:
-            self._info = info
-
         if self._group:
+            if info:
+                self._info = info
             if self._info:
                 self._sender.send(self._info)
                 log.info('Service advertised', service=self._info, group=self._group)
@@ -97,7 +96,7 @@ class RespondingAdvertizer(DefaultAdvertizer):
             self.advertise(info)
 
 
-class ScheduledAdvertizer(DefaultScheduler[ServiceInfo], Advertizer):
+class ScheduledAdvertizer(AbstractScheduler[ServiceInfo], Advertizer):
 
     def __init__(self, advertizer: Advertizer, timer: IReusableTimer) -> None:
         super().__init__(timer)

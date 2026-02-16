@@ -14,7 +14,7 @@ def main() -> None:
     shutdown_event = setup_shutdown()
 
     # Define the group to advertise the camera service on
-    group = Group(name='effectiverange/sniper', url='udp://239.0.1.1:5555')
+    group = Group(name='effective-range/sniper', url='udp://239.0.1.1:5555')
 
     # Define the service information for the camera
     info = ServiceInfo(uuid=uuid4(), name='er-sniper-camera-1', role='camera', urls={

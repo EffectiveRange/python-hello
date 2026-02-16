@@ -6,10 +6,10 @@ from unittest.mock import MagicMock
 from common_utility import IReusableTimer
 from context_logger import setup_logging
 
-from hello import DefaultScheduler
+from hello import AbstractScheduler
 
 
-class DefaultSchedulerDiscovererTest(TestCase):
+class AbstractSchedulerTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -77,7 +77,7 @@ class DefaultSchedulerDiscovererTest(TestCase):
         timer.restart.assert_called_once()
 
 
-class TestScheduler(DefaultScheduler[Any]):
+class TestScheduler(AbstractScheduler[Any]):
 
     def __init__(self, timer: IReusableTimer) -> None:
         super().__init__(timer)
