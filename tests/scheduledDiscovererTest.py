@@ -107,7 +107,7 @@ class ScheduledDiscovererTest(TestCase):
         scheduled_discoverer.start(GROUP)
 
         # When
-        scheduled_discoverer.schedule(SERVICE_QUERY, 60, True)
+        scheduled_discoverer.schedule_one_shot(SERVICE_QUERY, 60)
 
         # Then
         timer.start.assert_called_once_with(60, scheduled_discoverer._execute, [SERVICE_QUERY])
@@ -120,7 +120,7 @@ class ScheduledDiscovererTest(TestCase):
         scheduled_discoverer.start(GROUP)
 
         # When
-        scheduled_discoverer.schedule(SERVICE_QUERY, 60, False)
+        scheduled_discoverer.schedule_periodic(SERVICE_QUERY, 60)
 
         # Then
         timer.start.assert_called_once_with(60, scheduled_discoverer._execute_and_restart, [SERVICE_QUERY])

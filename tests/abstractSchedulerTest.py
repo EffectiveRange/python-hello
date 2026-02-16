@@ -47,22 +47,46 @@ class AbstractSchedulerTest(TestCase):
         data = MagicMock()
 
         # When
-        scheduler.schedule(data, 60, True)
+        scheduler.schedule_one_shot(data, 60)
 
         # Then
         timer.start.assert_called_once_with(60, scheduler._execute, [data])
 
-    def test_schedules_periodic_discover(self):
+    def test_schedules_execution_once_with_default_interval(self):
+        # Given
+        timer = MagicMock(spec=IReusableTimer)
+        scheduler = TestScheduler(timer, 10)
+        data = MagicMock()
+
+        # When
+        scheduler.schedule_one_shot(data)
+
+        # Then
+        timer.start.assert_called_once_with(10, scheduler._execute, [data])
+
+    def test_schedules_execution_periodically(self):
         # Given
         timer = MagicMock(spec=IReusableTimer)
         scheduler = TestScheduler(timer)
         data = MagicMock()
 
         # When
-        scheduler.schedule(data, 60, False)
+        scheduler.schedule_periodic(data, 60)
 
         # Then
         timer.start.assert_called_once_with(60, scheduler._execute_and_restart, [data])
+
+    def test_schedules_execution_periodically_with_default_interval(self):
+        # Given
+        timer = MagicMock(spec=IReusableTimer)
+        scheduler = TestScheduler(timer, 10)
+        data = MagicMock()
+
+        # When
+        scheduler.schedule_periodic(data)
+
+        # Then
+        timer.start.assert_called_once_with(10, scheduler._execute_and_restart, [data])
 
     def test_execute_and_restart_restarts_timer(self):
         # Given
@@ -79,8 +103,8 @@ class AbstractSchedulerTest(TestCase):
 
 class TestScheduler(AbstractScheduler[Any]):
 
-    def __init__(self, timer: IReusableTimer) -> None:
-        super().__init__(timer)
+    def __init__(self, timer: IReusableTimer, interval: float = 0) -> None:
+        super().__init__(timer, interval)
 
     def _execute(self, data: Any | None = None) -> None:
         pass

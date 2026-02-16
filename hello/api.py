@@ -19,6 +19,7 @@ class HelloConfig:
     receiver_poll_timeout: float = 0.1
     advertizer_responder: bool = True
     advertizer_max_delay: float = 0.1
+    discoverer_max_workers: int = 1
 
 
 class Hello(object):
@@ -41,7 +42,7 @@ class Hello(object):
     def default_discoverer(cls, config: HelloConfig) -> DefaultDiscoverer:
         sender = RadioSender(config.context)
         receiver = DishReceiver(config.context, config.receiver_max_workers, config.receiver_poll_timeout)
-        return DefaultDiscoverer(sender, receiver)
+        return DefaultDiscoverer(sender, receiver, config.discoverer_max_workers)
 
     @classmethod
     def scheduled_discoverer(cls, config: HelloConfig) -> ScheduledDiscoverer:

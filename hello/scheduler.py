@@ -14,7 +14,10 @@ T = TypeVar('T')
 
 class Scheduler(Generic[T]):
 
-    def schedule(self, data: T | None = None, interval: float = 60, one_shot: bool = False) -> None:
+    def schedule_periodic(self, data: T | None = None, interval: float | None = None) -> None:
+        raise NotImplementedError()
+
+    def schedule_one_shot(self, data: T | None = None, interval: float | None = None) -> None:
         raise NotImplementedError()
 
     def stop(self) -> None:
@@ -23,8 +26,9 @@ class Scheduler(Generic[T]):
 
 class AbstractScheduler(Scheduler[T]):
 
-    def __init__(self, timer: IReusableTimer) -> None:
+    def __init__(self, timer: IReusableTimer, interval: float = 60) -> None:
         self._timer = timer
+        self._interval = interval
 
     def __enter__(self) -> Scheduler[T]:
         return self
@@ -32,13 +36,15 @@ class AbstractScheduler(Scheduler[T]):
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def schedule(self, data: T | None = None, interval: float = 60, one_shot: bool = False) -> None:
-        if one_shot:
-            self._timer.start(interval, self._execute, [data])
-            log.info('One-shot execution scheduled', data=data, interval=interval)
-        else:
-            self._timer.start(interval, self._execute_and_restart, [data])
-            log.info('Periodic execution scheduled', data=data, interval=interval)
+    def schedule_periodic(self, data: T | None = None, interval: float | None = None) -> None:
+        interval = interval or self._interval
+        self._timer.start(interval, self._execute_and_restart, [data])
+        log.info('Periodic execution scheduled', data=data, interval=interval)
+
+    def schedule_one_shot(self, data: T | None = None, interval: float | None = None) -> None:
+        interval = interval or self._interval
+        self._timer.start(interval, self._execute, [data])
+        log.info('One-shot execution scheduled', data=data, interval=interval)
 
     def stop(self) -> None:
         self._timer.cancel()
