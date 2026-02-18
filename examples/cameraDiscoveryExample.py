@@ -23,13 +23,13 @@ def main() -> None:
         def process_event(event: DiscoveryEvent) -> None:
             log.info('Service discovery event', type=event.type.name, service=event.service)
 
-        # Register the event handler to process discovery events
+        # Register the event handler
         discoverer.register(process_event)
 
         # Start the discoverer with the specified group
         discoverer.start(group)
 
-        # Send the service query
+        # Send a service query to trigger advertisement from matching services
         discoverer.discover(query)
 
         shutdown_event.wait()
