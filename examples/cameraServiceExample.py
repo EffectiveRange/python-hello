@@ -17,9 +17,10 @@ def main() -> None:
     group = Group(name='effective-range/sniper', url='udp://239.0.1.1:5555')
 
     # Define the service information for the camera
-    info = ServiceInfo(uuid=uuid4(), name='er-sniper-camera-1', role='camera', urls={
-        'device-api': 'grpc://er-sniper-camera-1/device',
-        'video-stream': 'blob:http://er-sniper-camera-1/video'
+    hostname = 'er-sniper-camera-1'
+    info = ServiceInfo(uuid=uuid4(), name=hostname, role='camera', urls={
+        'api': f'grpc://{hostname}.local:50051',
+        'stream': f'http://{hostname}.local:8000'
     })
 
     # Use a scheduled advertizer to periodically announce the camera service
