@@ -1,7 +1,8 @@
 {
   "deps": [
     {
-      "name": "libzmq-drafts",
+      "name": "libzmq5",
+      "ver": "4.3.5+drafts1",
       "hostinstall": true
     },
     {
