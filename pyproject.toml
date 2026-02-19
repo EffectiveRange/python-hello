@@ -8,6 +8,7 @@ maintainers = [
     { name = "Ferenc Nandor Janky & Attila Gombos", email = "info@effective-range.com" }
 ]
 dependencies = [
+    "netifaces",
     "pyzmq @ git+https://github.com/EffectiveRange/pyzmq.git@v27.1.0+drafts1",
     "python-context-logger @ git+https://github.com/EffectiveRange/python-context-logger.git@latest",
     "python-common-utility @ git+https://github.com/EffectiveRange/python-common-utility.git@latest"
