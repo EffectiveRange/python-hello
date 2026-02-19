@@ -1,0 +1,5 @@
+--no-auto-depends
+--depends python3-netifaces
+--depends python3-context-logger
+--depends python3-common-utility
+--depends python3-zmq-drafts
