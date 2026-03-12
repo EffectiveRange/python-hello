@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from context_logger import setup_logging
 
-from hello import GroupUrl, Group
+from hello import Group
 
 
 class GroupTest(TestCase):
@@ -15,45 +15,19 @@ class GroupTest(TestCase):
     def setUp(self):
         print()
 
-    def test_url_resolves_when_interface_is_not_provided(self):
-        # Given
-        group_url = GroupUrl(protocol='udp', address='239.0.1.1', port=5555)
-
+    def test_group_created(self):
         # When
-        url = group_url.resolve()
+        group = Group.create(name='test-group', address='239.0.1.1', port=5555)
 
         # Then
-        self.assertEqual('udp://239.0.1.1:5555', url)
+        self.assertEqual(Group(name='test-group', url='udp://239.0.1.1:5555'), group)
 
-    def test_url_resolves_when_interface_is_provided(self):
-        # Given
-        group_url = GroupUrl(protocol='udp', address='239.0.1.1', port=5555, interface='lo')
-
+    def test_group_created_when_interface_address_is_provided(self):
         # When
-        url = group_url.resolve()
+        group = Group.create(name='test-group', address='239.0.1.1', port=5555, if_address='192.168.0.100')
 
         # Then
-        self.assertEqual('udp://127.0.0.1;239.0.1.1:5555', url)
-
-    def test_url_resolves_when_interface_is_provided_but_not_exists(self):
-        # Given
-        group_url = GroupUrl(protocol='udp', address='239.0.1.1', port=5555, interface='nonexistent0')
-
-        # When
-        url = group_url.resolve()
-
-        # Then
-        self.assertEqual('udp://239.0.1.1:5555', url)
-
-    def test_group_created_with_resolved_url(self):
-        # Given
-        group_url = GroupUrl(address='239.0.1.1', port=5555, interface='lo')
-
-        # When
-        group = Group.create('test-group', group_url)
-
-        # Then
-        self.assertEqual(Group(name='test-group', url='udp://127.0.0.1;239.0.1.1:5555'), group)
+        self.assertEqual(Group(name='test-group', url='udp://192.168.0.100;239.0.1.1:5555'), group)
 
     def test_prefixed_group_created_with_hello_prefix(self):
         # Given
