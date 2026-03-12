@@ -2,18 +2,18 @@
 
 [Full report](https://htmlpreview.github.io/?https://github.com/EffectiveRange/python-hello/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
-| Name                  |    Stmts |     Miss |   Branch |   BrPart |   Cover |   Missing |
-|---------------------- | -------: | -------: | -------: | -------: | ------: | --------: |
-| hello/\_\_init\_\_.py |        8 |        0 |        0 |        0 |    100% |           |
-| hello/advertizer.py   |       81 |        0 |       10 |        0 |    100% |           |
-| hello/api.py          |       58 |        0 |        2 |        0 |    100% |           |
-| hello/discoverer.py   |      117 |        0 |       20 |        0 |    100% |           |
-| hello/group.py        |       34 |        0 |        4 |        1 |     97% |    21->25 |
-| hello/receiver.py     |       70 |        0 |        8 |        0 |    100% |           |
-| hello/scheduler.py    |       36 |        0 |        0 |        0 |    100% |           |
-| hello/sender.py       |       58 |        0 |       14 |        0 |    100% |           |
-| hello/service.py      |       20 |        0 |        0 |        0 |    100% |           |
-| **TOTAL**             |  **482** |    **0** |   **58** |    **1** | **99%** |           |
+| Name                  |    Stmts |     Miss |   Branch |   BrPart |    Cover |   Missing |
+|---------------------- | -------: | -------: | -------: | -------: | -------: | --------: |
+| hello/\_\_init\_\_.py |        8 |        0 |        0 |        0 |     100% |           |
+| hello/advertizer.py   |       81 |        0 |       10 |        0 |     100% |           |
+| hello/api.py          |       58 |        0 |        2 |        0 |     100% |           |
+| hello/discoverer.py   |      117 |        0 |       20 |        0 |     100% |           |
+| hello/group.py        |       23 |        0 |        0 |        0 |     100% |           |
+| hello/receiver.py     |       70 |        0 |        8 |        0 |     100% |           |
+| hello/scheduler.py    |       36 |        0 |        0 |        0 |     100% |           |
+| hello/sender.py       |       58 |        0 |       14 |        0 |     100% |           |
+| hello/service.py      |       20 |        0 |        0 |        0 |     100% |           |
+| **TOTAL**             |  **471** |    **0** |   **54** |    **0** | **100%** |           |
 
 
 ## Setup coverage badge
