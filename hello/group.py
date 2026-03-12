@@ -5,25 +5,6 @@
 from dataclasses import dataclass
 from enum import Enum
 
-import netifaces
-
-
-@dataclass
-class GroupUrl:
-    address: str
-    port: int
-    protocol: str = 'udp'
-    interface: str | None = None
-
-    def resolve(self) -> str:
-        if self.interface and self.interface in netifaces.interfaces():
-            inet_address = netifaces.ifaddresses(self.interface).get(netifaces.AF_INET)
-            if inet_address and len(inet_address) > 0:
-                address = inet_address[0].get('addr')
-                return f'{self.protocol}://{address};{self.address}:{self.port}'
-
-        return f'{self.protocol}://{self.address}:{self.port}'
-
 
 class GroupPrefix(Enum):
     HELLO = 'hello'
@@ -42,8 +23,9 @@ class Group:
         return PrefixedGroup(GroupPrefix.QUERY, self)
 
     @staticmethod
-    def create(name: str, url: GroupUrl) -> 'Group':
-        return Group(name, url.resolve())
+    def create(name: str, address: str, port: int, protocol: str = 'udp', if_address: str | None = None) -> 'Group':
+        if_address = f'{if_address};' if if_address else ''
+        return Group(name, f'{protocol}://{if_address}{address}:{port}')
 
 
 @dataclass
