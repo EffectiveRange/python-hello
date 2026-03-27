@@ -5,6 +5,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from enum import Enum
+from logging import INFO, DEBUG
 from typing import Any, Protocol
 from uuid import UUID
 
@@ -41,7 +42,7 @@ class Discoverer:
     def stop(self) -> None:
         raise NotImplementedError()
 
-    def discover(self, query: ServiceQuery | None = None) -> None:
+    def discover(self, query: ServiceQuery | None = None, log_level: int = INFO) -> None:
         raise NotImplementedError()
 
     def register(self, handler: OnDiscoveryEvent) -> None:
@@ -78,6 +79,7 @@ class DefaultDiscoverer(Discoverer):
         self._sender.start(group.query())
         self._receiver.register(self._handle_message)
         self._receiver.start(group.hello())
+        log.info('Discoverer started', group=self._group, query=query)
 
     def stop(self) -> None:
         self._group = None
@@ -85,14 +87,15 @@ class DefaultDiscoverer(Discoverer):
         self._sender.stop()
         self._receiver.deregister(self._handle_message)
         self._receiver.stop()
+        log.info('Discoverer stopped')
 
-    def discover(self, query: ServiceQuery | None = None) -> None:
+    def discover(self, query: ServiceQuery | None = None, log_level: int = INFO) -> None:
         if self._group:
             if query:
                 self._matcher = ServiceMatcher(query)
             if self._matcher:
                 self._sender.send(self._matcher.query)
-                log.info('Service discovery initiated', group=self._group, query=self._matcher.query)
+                log.log(log_level, 'Service discovery initiated', group=self._group, query=self._matcher.query)
             else:
                 log.warning('Cannot discover services, no query provided', group=self._group)
         else:
@@ -168,8 +171,8 @@ class ScheduledDiscoverer(AbstractScheduler[ServiceQuery], Discoverer):
         super().stop()
         self._discoverer.stop()
 
-    def discover(self, query: ServiceQuery | None = None) -> None:
-        self._discoverer.discover(query)
+    def discover(self, query: ServiceQuery | None = None, log_level: int = INFO) -> None:
+        self._discoverer.discover(query, log_level)
 
     def get_services(self) -> dict[UUID, ServiceInfo]:
         return self._discoverer.get_services()
@@ -181,4 +184,4 @@ class ScheduledDiscoverer(AbstractScheduler[ServiceQuery], Discoverer):
         self._discoverer.deregister(handler)
 
     def _execute(self, query: ServiceQuery | None = None) -> None:
-        self.discover(query)
+        self.discover(query, DEBUG)
