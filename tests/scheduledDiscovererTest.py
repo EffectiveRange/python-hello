@@ -1,4 +1,5 @@
 import unittest
+from logging import DEBUG, INFO
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -97,7 +98,7 @@ class ScheduledDiscovererTest(TestCase):
         scheduled_discoverer.discover(SERVICE_QUERY)
 
         # Then
-        discoverer.discover.assert_called_once_with(SERVICE_QUERY)
+        discoverer.discover.assert_called_once_with(SERVICE_QUERY, INFO)
 
     def test_schedules_discover_once(self):
         # Given
@@ -136,7 +137,7 @@ class ScheduledDiscovererTest(TestCase):
         scheduled_discoverer._execute_and_restart(SERVICE_QUERY)
 
         # Then
-        discoverer.discover.assert_called_once_with(SERVICE_QUERY)
+        discoverer.discover.assert_called_once_with(SERVICE_QUERY, DEBUG)
         timer.restart.assert_called_once()
 
 

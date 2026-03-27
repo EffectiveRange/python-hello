@@ -4,6 +4,7 @@
 
 import random
 import time
+from logging import INFO, DEBUG
 from typing import Any
 
 from common_utility import IReusableTimer
@@ -22,7 +23,7 @@ class Advertizer:
     def stop(self) -> None:
         raise NotImplementedError()
 
-    def advertise(self, info: ServiceInfo | None = None) -> None:
+    def advertise(self, info: ServiceInfo | None = None, log_level: int = INFO) -> None:
         raise NotImplementedError()
 
 
@@ -43,18 +44,21 @@ class DefaultAdvertizer(Advertizer):
         self._sender.start(group.hello())
         self._group = group
         self._info = info
+        log.info('Advertizer started', group=self._group, service=self._info)
 
     def stop(self) -> None:
         self._group = None
+        self._info = None
         self._sender.stop()
+        log.info('Advertizer stopped')
 
-    def advertise(self, info: ServiceInfo | None = None) -> None:
+    def advertise(self, info: ServiceInfo | None = None, log_level: int = INFO) -> None:
         if self._group:
             if info:
                 self._info = info
             if self._info:
                 self._sender.send(self._info)
-                log.info('Service advertised', service=self._info, group=self._group)
+                log.log(log_level, 'Service advertised', service=self._info, group=self._group)
             else:
                 log.warning('Cannot advertise service, no service info provided', group=self._group)
         else:
@@ -115,8 +119,8 @@ class ScheduledAdvertizer(AbstractScheduler[ServiceInfo], Advertizer):
         super().stop()
         self._advertizer.stop()
 
-    def advertise(self, info: ServiceInfo | None = None) -> None:
-        self._advertizer.advertise(info)
+    def advertise(self, info: ServiceInfo | None = None, log_level: int = INFO) -> None:
+        self._advertizer.advertise(info, log_level)
 
     def _execute(self, info: ServiceInfo | None = None) -> None:
-        self.advertise(info)
+        self.advertise(info, DEBUG)

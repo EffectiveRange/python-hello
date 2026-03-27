@@ -1,4 +1,5 @@
 import unittest
+from logging import DEBUG, INFO
 from unittest import TestCase
 from unittest.mock import MagicMock
 from uuid import uuid4
@@ -71,7 +72,7 @@ class ScheduledAdvertizerTest(TestCase):
         scheduled_advertizer.advertise(SERVICE_INFO)
 
         # Then
-        advertizer.advertise.assert_called_once_with(SERVICE_INFO)
+        advertizer.advertise.assert_called_once_with(SERVICE_INFO, INFO)
 
     def test_schedules_advertise_once(self):
         # Given
@@ -110,7 +111,7 @@ class ScheduledAdvertizerTest(TestCase):
         scheduled_advertizer._execute_and_restart(SERVICE_INFO)
 
         # Then
-        advertizer.advertise.assert_called_once_with(SERVICE_INFO)
+        advertizer.advertise.assert_called_once_with(SERVICE_INFO, DEBUG)
         timer.restart.assert_called_once()
 
 
