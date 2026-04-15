@@ -9,9 +9,17 @@ from test_utility import wait_for_assertion
 from hello import Service, Group, ServiceQuery, DefaultDiscoverer, Sender, Receiver, OnDiscoveryEvent, \
     DiscoveryEventType, DiscoveryEvent
 
+
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_QUERY = ServiceQuery('test-.*', 'test-.*')
-SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(
+    uuid4(),
+    'test-service',
+    'test-role',
+    {'test': 'http://localhost:8080'},
+    {'site': 'test-site', 'range': 'test-range'},
+    '192.168.1.100'
+)
 
 
 class DefaultDiscovererTest(TestCase):
@@ -153,7 +161,12 @@ class DefaultDiscovererTest(TestCase):
         discoverer._handle_message(SERVICE.to_dict())
         handler.reset_mock()
         new_service = Service(
-            SERVICE.uuid, SERVICE.name, SERVICE.role, {'test': 'http://localhost:9090'}
+            SERVICE.uuid,
+            SERVICE.name,
+            SERVICE.role,
+            {'test': 'http://localhost:9090'},
+            {'site': 'test-site', 'range': 'test-range', 'updated': True},
+            '192.168.1.101'
         )
 
         # When
@@ -221,7 +234,14 @@ class DefaultDiscovererTest(TestCase):
         discoverer = DefaultDiscoverer(sender, receiver)
         discoverer.start(GROUP, SERVICE_QUERY)
 
-        non_matching_info = Service(uuid4(), 'other-service', 'test-role', {'test': 'http://localhost:8080'})
+        non_matching_info = Service(
+            uuid4(),
+            'other-service',
+            'test-role',
+            {'test': 'http://localhost:8080'},
+            {'site': 'other-site'},
+            '192.168.1.102'
+        )
 
         # When
         discoverer._handle_message(non_matching_info.to_dict())

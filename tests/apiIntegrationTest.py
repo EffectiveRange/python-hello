@@ -9,7 +9,14 @@ from test_utility import wait_for_assertion
 from hello import Service, Group, ServiceQuery, Hello, HelloConfig
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(
+    uuid4(),
+    'test-service',
+    'test-role',
+    {'test': 'http://localhost:8080'},
+    {'site': 'test-site', 'range': 'test-range'},
+    '192.168.1.100'
+)
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
 
 
@@ -46,8 +53,22 @@ class ApiIntegrationTest(TestCase):
         with (Hello.builder(config).advertizer().default() as advertizer1,
               Hello.builder(config).advertizer().default() as advertizer2,
               Hello.builder(config).discoverer().default() as discoverer):
-            service1 = Service(uuid4(), 'test-service1', 'test-role', {'test': 'http://localhost:8080'})
-            service2 = Service(uuid4(), 'test-service2', 'test-role', {'test': 'http://localhost:8080'})
+            service1 = Service(
+                uuid4(),
+                'test-service1',
+                'test-role',
+                {'test': 'http://localhost:8080'},
+                {'site': 'site1', 'range': 'range1'},
+                '192.168.1.101'
+            )
+            service2 = Service(
+                uuid4(),
+                'test-service2',
+                'test-role',
+                {'test': 'http://localhost:8080'},
+                {'site': 'site2', 'range': 'range2'},
+                '192.168.1.102'
+            )
             advertizer1.start(GROUP, service1)
             advertizer2.start(GROUP, service2)
             discoverer.start(GROUP, ServiceQuery('test-service.+', 'test-role'))
@@ -123,8 +144,22 @@ class ApiIntegrationTest(TestCase):
         with (Hello.builder(config).advertizer().default() as advertizer1,
               Hello.builder(config).advertizer().default() as advertizer2,
               Hello.builder(config).discoverer().default() as discoverer):
-            service1 = Service(uuid4(), 'test-service1', 'test-role', {'test': 'http://localhost:8080'})
-            service2 = Service(uuid4(), 'test-service2', 'test-role', {'test': 'http://localhost:8080'})
+            service1 = Service(
+                uuid4(),
+                'test-service1',
+                'test-role',
+                {'test': 'http://localhost:8080'},
+                {'site': 'site1', 'range': 'range1'},
+                '192.168.1.101'
+            )
+            service2 = Service(
+                uuid4(),
+                'test-service2',
+                'test-role',
+                {'test': 'http://localhost:8080'},
+                {'site': 'site2', 'range': 'range2'},
+                '192.168.1.102'
+            )
             advertizer1.start(GROUP, service1)
             advertizer2.start(GROUP, service2)
             discoverer.start(GROUP, ServiceQuery('test-service.+', 'test-role'))

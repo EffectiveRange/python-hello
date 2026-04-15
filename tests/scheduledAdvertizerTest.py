@@ -10,7 +10,14 @@ from context_logger import setup_logging
 from hello import Service, Group, ScheduledAdvertizer, Advertizer
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(
+    uuid4(),
+    'test-service',
+    'test-role',
+    {'test': 'http://localhost:8080'},
+    {'site': 'test-site', 'range': 'test-range'},
+    '192.168.1.100'
+)
 
 
 class ScheduledAdvertizerTest(TestCase):

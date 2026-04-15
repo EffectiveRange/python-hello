@@ -1,8 +1,9 @@
 # IntelliJ IDEA folder-specific ignored files
 /shelf/
 /workspace.xml
+/deployment.xml
 /queries/
 /dataSources/
 /dataSources.local.xml
 /httpRequests/
-copilot.*
+copilot*
