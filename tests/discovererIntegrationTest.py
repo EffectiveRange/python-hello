@@ -7,11 +7,11 @@ from context_logger import setup_logging
 from test_utility import wait_for_assertion
 from zmq import Context
 
-from hello import ServiceInfo, Group, RadioSender, DishReceiver, ServiceQuery, DefaultDiscoverer, ScheduledDiscoverer
+from hello import Service, Group, RadioSender, DishReceiver, ServiceQuery, DefaultDiscoverer, ScheduledDiscoverer
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
-SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DiscovererIntegrationTest(TestCase):
@@ -34,14 +34,14 @@ class DiscovererIntegrationTest(TestCase):
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
-            test_sender.send(SERVICE_INFO)
+            test_sender.send(SERVICE)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
 
-    def test_updates_service_when_info_changed(self):
+    def test_updates_service_when_service_changed(self):
         # Given
         context = Context()
         sender = RadioSender(context)
@@ -51,25 +51,25 @@ class DiscovererIntegrationTest(TestCase):
             test_sender.start(GROUP.hello())
             discoverer.start(GROUP, SERVICE_QUERY)
 
-            test_sender.send(SERVICE_INFO)
+            test_sender.send(SERVICE)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
             # When
-            new_service_info = ServiceInfo(
-                SERVICE_INFO.uuid, SERVICE_INFO.name, SERVICE_INFO.role, {'test': 'http://localhost:9090'}
+            new_service = Service(
+                SERVICE.uuid, SERVICE.name, SERVICE.role, {'test': 'http://localhost:9090'}
             )
-            test_sender.send(new_service_info)
+            test_sender.send(new_service)
 
             wait_for_assertion(1, lambda: self.assertEqual(
                 'http://localhost:9090',
-                discoverer.get_services()[SERVICE_INFO.uuid].urls['test']
+                discoverer.get_services()[SERVICE.uuid].urls['test']
             ))
 
         # Then
         self.assertEqual(
             'http://localhost:9090',
-            discoverer.get_services()[SERVICE_INFO.uuid].urls['test']
+            discoverer.get_services()[SERVICE.uuid].urls['test']
         )
 
     def test_sends_query(self):

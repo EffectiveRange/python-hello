@@ -5,10 +5,10 @@ from uuid import uuid4
 
 from context_logger import setup_logging
 
-from hello import ServiceInfo, Group, Sender, DefaultAdvertizer
+from hello import Service, Group, Sender, DefaultAdvertizer
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DefaultAdvertizerTest(TestCase):
@@ -55,43 +55,43 @@ class DefaultAdvertizerTest(TestCase):
         # Then
         sender.start.assert_called_once_with(GROUP.hello())
 
-    def test_sends_info_when_passed_at_start(self):
+    def test_sends_service_when_passed_at_start(self):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(GROUP, SERVICE_INFO)
+        advertizer.start(GROUP, SERVICE)
 
         # When
         advertizer.advertise()
 
         # Then
-        sender.send.assert_called_once_with(SERVICE_INFO)
+        sender.send.assert_called_once_with(SERVICE)
 
-    def test_sends_info_when_passed_at_advertise(self):
+    def test_sends_service_when_passed_at_advertise(self):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
         advertizer.start(GROUP)
 
         # When
-        advertizer.advertise(SERVICE_INFO)
+        advertizer.advertise(SERVICE)
 
         # Then
-        sender.send.assert_called_once_with(SERVICE_INFO)
+        sender.send.assert_called_once_with(SERVICE)
 
-    def test_sends_last_info_when_passed_at_start_and_at_advertise(self):
+    def test_sends_last_service_when_passed_at_start_and_at_advertise(self):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
-        advertizer.start(GROUP, ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:9090'}))
+        advertizer.start(GROUP, Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:9090'}))
 
         # When
-        advertizer.advertise(SERVICE_INFO)
+        advertizer.advertise(SERVICE)
 
         # Then
-        sender.send.assert_called_once_with(SERVICE_INFO)
+        sender.send.assert_called_once_with(SERVICE)
 
-    def test_does_not_send_info_when_no_info_provided(self):
+    def test_does_not_send_service_when_no_service_provided(self):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
@@ -103,13 +103,13 @@ class DefaultAdvertizerTest(TestCase):
         # Then
         sender.send.assert_not_called()
 
-    def test_does_not_send_info_when_not_started(self):
+    def test_does_not_send_service_when_not_started(self):
         # Given
         sender = MagicMock(spec=Sender)
         advertizer = DefaultAdvertizer(sender)
 
         # When
-        advertizer.advertise(SERVICE_INFO)
+        advertizer.advertise(SERVICE)
 
         # Then
         sender.send.assert_not_called()

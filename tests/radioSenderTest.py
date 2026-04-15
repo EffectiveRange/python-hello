@@ -7,11 +7,11 @@ from uuid import uuid4
 from context_logger import setup_logging
 from zmq import Context, ZMQError
 
-from hello import ServiceInfo, Group, ServiceQuery
+from hello import Service, Group, ServiceQuery
 from hello.sender import RadioSender
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
 
 
@@ -105,10 +105,10 @@ class RadioSenderTest(TestCase):
         sender.start(group)
 
         # When
-        sender.send(SERVICE_INFO)
+        sender.send(SERVICE)
 
         # Then
-        context.socket.return_value.send_json.assert_called_with(SERVICE_INFO.to_dict(), group='hello:test-group')
+        context.socket.return_value.send_json.assert_called_with(SERVICE.to_dict(), group='hello:test-group')
 
     def test_sends_message_when_convertible_to_dict_with_as_dict(self):
         # Given
@@ -120,7 +120,7 @@ class RadioSenderTest(TestCase):
         class TestData:
 
             def as_dict(self) -> dict[str, Any]:
-                return SERVICE_INFO.to_dict()
+                return SERVICE.to_dict()
 
         data = TestData()
 
@@ -138,10 +138,10 @@ class RadioSenderTest(TestCase):
         sender.start(group)
 
         # When
-        sender.send(SERVICE_INFO.to_dict())
+        sender.send(SERVICE.to_dict())
 
         # Then
-        context.socket.return_value.send_json.assert_called_with(SERVICE_INFO.to_dict(), group='hello:test-group')
+        context.socket.return_value.send_json.assert_called_with(SERVICE.to_dict(), group='hello:test-group')
 
     def test_does_not_send_message_when_not_serializable(self):
         # Given
@@ -162,7 +162,7 @@ class RadioSenderTest(TestCase):
         sender = RadioSender(context)
 
         # When
-        sender.send(SERVICE_INFO)
+        sender.send(SERVICE)
 
         # Then
         context.socket.return_value.send_json.assert_not_called()
@@ -176,10 +176,10 @@ class RadioSenderTest(TestCase):
         context.socket.return_value.send_json.side_effect = ZMQError(1, "Send failed")
 
         # When
-        sender.send(SERVICE_INFO)
+        sender.send(SERVICE)
 
         # Then
-        context.socket.return_value.send_json.assert_called_once_with(SERVICE_INFO.to_dict(), group='hello:test-group')
+        context.socket.return_value.send_json.assert_called_once_with(SERVICE.to_dict(), group='hello:test-group')
 
 
 if __name__ == '__main__':

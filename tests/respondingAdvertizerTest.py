@@ -5,10 +5,10 @@ from uuid import uuid4
 
 from context_logger import setup_logging
 
-from hello import ServiceInfo, Group, Sender, Receiver, RespondingAdvertizer, ServiceQuery
+from hello import Service, Group, Sender, Receiver, RespondingAdvertizer, ServiceQuery
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class RespondingAdvertizerTest(TestCase):
@@ -61,25 +61,25 @@ class RespondingAdvertizerTest(TestCase):
         sender.start.assert_called_once_with(GROUP.hello())
         receiver.start.assert_called_once_with(GROUP.query())
 
-    def test_sends_service_info_when_receives_matching_query(self):
+    def test_sends_service_when_receives_matching_query(self):
         # Given
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         advertizer = RespondingAdvertizer(sender, receiver)
-        advertizer.start(GROUP, SERVICE_INFO)
+        advertizer.start(GROUP, SERVICE)
 
         # When
         advertizer._handle_message(ServiceQuery('test-.*', 'test-.*').__dict__)
 
         # Then
-        sender.send.assert_called_once_with(SERVICE_INFO)
+        sender.send.assert_called_once_with(SERVICE)
 
-    def test_does_not_send_service_info_when_receives_non_matching_query(self):
+    def test_does_not_send_service_when_receives_non_matching_query(self):
         # Given
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         advertizer = RespondingAdvertizer(sender, receiver)
-        advertizer.start(GROUP, SERVICE_INFO)
+        advertizer.start(GROUP, SERVICE)
 
         # When
         advertizer._handle_message(ServiceQuery('other-.*', 'test-.*').__dict__)
@@ -87,7 +87,7 @@ class RespondingAdvertizerTest(TestCase):
         # Then
         sender.send.assert_not_called()
 
-    def test_does_not_send_service_info_when_no_service_info_set(self):
+    def test_does_not_send_service_when_no_service_set(self):
         # Given
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
@@ -105,7 +105,7 @@ class RespondingAdvertizerTest(TestCase):
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         advertizer = RespondingAdvertizer(sender, receiver)
-        advertizer.start(GROUP, SERVICE_INFO)
+        advertizer.start(GROUP, SERVICE)
 
         # When
         advertizer._handle_message({'invalid': 'message'})

@@ -6,12 +6,12 @@ from uuid import uuid4
 from context_logger import setup_logging
 from test_utility import wait_for_assertion
 
-from hello import ServiceInfo, Group, ServiceQuery, DefaultDiscoverer, Sender, Receiver, OnDiscoveryEvent, \
+from hello import Service, Group, ServiceQuery, DefaultDiscoverer, Sender, Receiver, OnDiscoveryEvent, \
     DiscoveryEventType, DiscoveryEvent
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_QUERY = ServiceQuery('test-.*', 'test-.*')
-SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DefaultDiscovererTest(TestCase):
@@ -64,7 +64,7 @@ class DefaultDiscovererTest(TestCase):
         sender.start.assert_called_once_with(GROUP.query())
         receiver.start.assert_called_once_with(GROUP.hello())
 
-    def test_registers_event_handler(self):
+    def test_registers_event_handler_for_all_event_types(self):
         # Given
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
@@ -75,9 +75,26 @@ class DefaultDiscovererTest(TestCase):
         discoverer.register(handler)
 
         # Then
-        self.assertIn(handler, discoverer._handlers)
+        self.assertIn(handler, discoverer._handlers[DiscoveryEventType.DISCOVERED])
+        self.assertIn(handler, discoverer._handlers[DiscoveryEventType.UPDATED])
+        self.assertIn(handler, discoverer._handlers[DiscoveryEventType.UNCHANGED])
 
-    def test_deregisters_event_handler(self):
+    def test_registers_event_handler_for_single_event_type(self):
+        # Given
+        sender = MagicMock(spec=Sender)
+        receiver = MagicMock(spec=Receiver)
+        discoverer = DefaultDiscoverer(sender, receiver)
+        handler = MagicMock(spec=OnDiscoveryEvent)
+
+        # When
+        discoverer.register(handler, {DiscoveryEventType.DISCOVERED})
+
+        # Then
+        self.assertIn(handler, discoverer._handlers[DiscoveryEventType.DISCOVERED])
+        self.assertNotIn(handler, discoverer._handlers[DiscoveryEventType.UPDATED])
+        self.assertNotIn(handler, discoverer._handlers[DiscoveryEventType.UNCHANGED])
+
+    def test_deregisters_event_handler_for_all_event_types(self):
         # Given
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
@@ -91,25 +108,41 @@ class DefaultDiscovererTest(TestCase):
         # Then
         self.assertNotIn(handler, discoverer._handlers)
 
-    def test_caches_service_and_calls_handler_when_receives_matching_info(self):
+    def test_deregisters_event_handler_for_single_event_type(self):
         # Given
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
         discoverer = DefaultDiscoverer(sender, receiver)
-        discoverer.start(GROUP, SERVICE_QUERY)
         handler = MagicMock(spec=OnDiscoveryEvent)
         discoverer.register(handler)
 
         # When
-        discoverer._handle_message(SERVICE_INFO.to_dict())
+        discoverer.deregister(handler, {DiscoveryEventType.UNCHANGED})
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertIn(handler, discoverer._handlers[DiscoveryEventType.DISCOVERED])
+        self.assertIn(handler, discoverer._handlers[DiscoveryEventType.UPDATED])
+        self.assertNotIn(handler, discoverer._handlers[DiscoveryEventType.UNCHANGED])
+
+    def test_caches_service_and_calls_handler_when_receives_matching_service(self):
+        # Given
+        sender = MagicMock(spec=Sender)
+        receiver = MagicMock(spec=Receiver)
+        discoverer = DefaultDiscoverer(sender, receiver)
+        discoverer.start(GROUP, SERVICE_QUERY)
+        handler = MagicMock(spec=OnDiscoveryEvent)
+        discoverer.register(handler, {DiscoveryEventType.DISCOVERED})
+
+        # When
+        discoverer._handle_message(SERVICE.to_dict())
+
+        # Then
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
         wait_for_assertion(1, lambda: handler.assert_called_once_with(
-            DiscoveryEvent(GROUP, SERVICE_QUERY, SERVICE_INFO, DiscoveryEventType.DISCOVERED)
+            DiscoveryEvent(GROUP, SERVICE_QUERY, SERVICE, DiscoveryEventType.DISCOVERED)
         ))
 
-    def test_updates_service_and_calls_handler_when_receives_matching_info(self):
+    def test_updates_service_and_calls_handler_when_receives_matching_service(self):
         # Given
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
@@ -117,22 +150,22 @@ class DefaultDiscovererTest(TestCase):
         discoverer.start(GROUP, SERVICE_QUERY)
         handler = MagicMock(spec=OnDiscoveryEvent)
         discoverer.register(handler)
-        discoverer._handle_message(SERVICE_INFO.to_dict())
+        discoverer._handle_message(SERVICE.to_dict())
         handler.reset_mock()
-        new_service_info = ServiceInfo(
-            SERVICE_INFO.uuid, SERVICE_INFO.name, SERVICE_INFO.role, {'test': 'http://localhost:9090'}
+        new_service = Service(
+            SERVICE.uuid, SERVICE.name, SERVICE.role, {'test': 'http://localhost:9090'}
         )
 
         # When
-        discoverer._handle_message(new_service_info.to_dict())
+        discoverer._handle_message(new_service.to_dict())
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: new_service_info}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: new_service}, discoverer.get_services())
         wait_for_assertion(1, lambda: handler.assert_called_once_with(
-            DiscoveryEvent(GROUP, SERVICE_QUERY, new_service_info, DiscoveryEventType.UPDATED)
+            DiscoveryEvent(GROUP, SERVICE_QUERY, new_service, DiscoveryEventType.UPDATED)
         ))
 
-    def test_does_not_call_handler_when_service_info_not_changed(self):
+    def test_does_not_call_handler_when_service_not_changed(self):
         # Given
         sender = MagicMock(spec=Sender)
         receiver = MagicMock(spec=Receiver)
@@ -140,11 +173,11 @@ class DefaultDiscovererTest(TestCase):
         discoverer.start(GROUP, SERVICE_QUERY)
         handler = MagicMock(spec=OnDiscoveryEvent)
         discoverer.register(handler)
-        discoverer._handle_message(SERVICE_INFO.to_dict())
+        discoverer._handle_message(SERVICE.to_dict())
         handler.reset_mock()
 
         # When
-        discoverer._handle_message(SERVICE_INFO.to_dict())
+        discoverer._handle_message(SERVICE.to_dict())
 
         # Then
         handler.assert_not_called()
@@ -160,12 +193,12 @@ class DefaultDiscovererTest(TestCase):
         discoverer.register(handler)
 
         # When
-        discoverer._handle_message(SERVICE_INFO.to_dict())
+        discoverer._handle_message(SERVICE.to_dict())
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
         wait_for_assertion(1, lambda: handler.assert_called_once_with(
-            DiscoveryEvent(GROUP, SERVICE_QUERY, SERVICE_INFO, DiscoveryEventType.DISCOVERED)
+            DiscoveryEvent(GROUP, SERVICE_QUERY, SERVICE, DiscoveryEventType.DISCOVERED)
         ))
 
     def test_handles_invalid_message_gracefully(self):
@@ -188,7 +221,7 @@ class DefaultDiscovererTest(TestCase):
         discoverer = DefaultDiscoverer(sender, receiver)
         discoverer.start(GROUP, SERVICE_QUERY)
 
-        non_matching_info = ServiceInfo(uuid4(), 'other-service', 'test-role', {'test': 'http://localhost:8080'})
+        non_matching_info = Service(uuid4(), 'other-service', 'test-role', {'test': 'http://localhost:8080'})
 
         # When
         discoverer._handle_message(non_matching_info.to_dict())
@@ -204,7 +237,7 @@ class DefaultDiscovererTest(TestCase):
         discoverer.start(GROUP)
 
         # When
-        discoverer._handle_message(SERVICE_INFO.to_dict())
+        discoverer._handle_message(SERVICE.to_dict())
 
         # Then
         self.assertEqual({}, discoverer.get_services())

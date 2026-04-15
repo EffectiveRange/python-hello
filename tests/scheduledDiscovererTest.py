@@ -72,7 +72,7 @@ class ScheduledDiscovererTest(TestCase):
         scheduled_discoverer.register(handler)
 
         # Then
-        discoverer.register.assert_called_once_with(handler)
+        discoverer.register.assert_called_once_with(handler, None)
 
     def test_deregisters_event_handler(self):
         # Given
@@ -86,7 +86,7 @@ class ScheduledDiscovererTest(TestCase):
         scheduled_discoverer.deregister(handler)
 
         # Then
-        discoverer.deregister.assert_called_once_with(handler)
+        discoverer.deregister.assert_called_once_with(handler, None)
 
     def test_sends_service_query(self):
         # Given
