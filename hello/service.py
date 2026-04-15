@@ -19,7 +19,7 @@ class Service:
 
     def __repr__(self) -> str:
         return (f"Service(uuid='{self.uuid}', name='{self.name}', role='{self.role}', "
-                f"urls={self.urls}, info={self.info}), addr='{self.address}'")
+                f"urls={self.urls}, info={self.info}, address='{self.address}')")
 
     def to_dict(self) -> dict[str, Any]:
         return {
