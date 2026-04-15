@@ -4,7 +4,7 @@ from common_utility import InterfaceResolver
 from context_logger import get_logger, setup_logging
 
 from examples import setup_shutdown
-from hello import ServiceInfo, Hello, Group
+from hello import Service, Hello, Group
 
 setup_logging('hello')
 
@@ -21,9 +21,12 @@ def main() -> None:
     group = Group.create(name='effective-range/sniper', address='239.0.1.1', port=5555, if_address=if_address)
 
     # Define the service information for the camera
-    info = ServiceInfo(uuid=uuid4(), name='er-sniper-camera-1', role='camera', urls={
+    service = Service(uuid=uuid4(), name='er-sniper-camera-1', role='camera', address=if_address, urls={
         'api': f'grpc://{if_address}:50051',
         'stream': f'http://{if_address}:8000/video_feed'
+    }, info={
+        'site': 'er-sniper-site-1',
+        'range': 'er-sniper-range-1'
     })
 
     # Use a scheduled advertizer to periodically announce the camera service
@@ -32,7 +35,7 @@ def main() -> None:
         advertizer.start(group)
 
         # Immediately advertise the service information
-        advertizer.advertise(info)
+        advertizer.advertise(service)
 
         # Schedule periodic advertisements every 10 seconds
         advertizer.schedule_periodic(interval=10)

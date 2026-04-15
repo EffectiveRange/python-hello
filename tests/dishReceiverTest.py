@@ -8,10 +8,10 @@ from context_logger import setup_logging
 from test_utility import wait_for_assertion
 from zmq import Context, ZMQError, Poller, POLLIN
 
-from hello import ServiceInfo, Group, DishReceiver, OnMessage
+from hello import Service, Group, DishReceiver, OnMessage
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class DishReceiverTest(TestCase):
@@ -114,7 +114,7 @@ class DishReceiverTest(TestCase):
         # Given
         group = GROUP.hello()
         context = MagicMock(spec=Context)
-        context.socket.return_value.recv_json.return_value = SERVICE_INFO.to_dict()
+        context.socket.return_value.recv_json.return_value = SERVICE.to_dict()
         handler = MagicMock(spec=OnMessage)
 
         with DishReceiver(context) as receiver:
@@ -126,7 +126,7 @@ class DishReceiverTest(TestCase):
             receiver.start(group)
 
             # Then
-            wait_for_assertion(1, lambda: handler.assert_called_once_with(SERVICE_INFO.to_dict()))
+            wait_for_assertion(1, lambda: handler.assert_called_once_with(SERVICE.to_dict()))
 
     def test_handles_message_receive_error_gracefully(self):
         # Given
@@ -150,7 +150,7 @@ class DishReceiverTest(TestCase):
         # Given
         group = GROUP.hello()
         context = MagicMock(spec=Context)
-        context.socket.return_value.recv_json.return_value = SERVICE_INFO.to_dict()
+        context.socket.return_value.recv_json.return_value = SERVICE.to_dict()
         handler = MagicMock(spec=OnMessage)
         handler.side_effect = Exception("Execution failed")
 
@@ -163,7 +163,7 @@ class DishReceiverTest(TestCase):
             receiver.start(group)
 
             # Then
-            wait_for_assertion(1, lambda: handler.assert_called_once_with(SERVICE_INFO.to_dict()))
+            wait_for_assertion(1, lambda: handler.assert_called_once_with(SERVICE.to_dict()))
 
 
 if __name__ == '__main__':

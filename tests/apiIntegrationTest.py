@@ -6,10 +6,17 @@ from uuid import uuid4
 from context_logger import setup_logging
 from test_utility import wait_for_assertion
 
-from hello import ServiceInfo, Group, ServiceQuery, Hello, HelloConfig
+from hello import Service, Group, ServiceQuery, Hello, HelloConfig
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(
+    uuid4(),
+    'test-service',
+    'test-role',
+    {'test': 'http://localhost:8080'},
+    {'site': 'test-site', 'range': 'test-range'},
+    '192.168.1.100'
+)
 SERVICE_QUERY = ServiceQuery('test-service', 'test-role')
 
 
@@ -28,7 +35,7 @@ class ApiIntegrationTest(TestCase):
 
         with (Hello.builder(config).advertizer().default() as advertizer,
               Hello.builder(config).discoverer().default() as discoverer):
-            advertizer.start(GROUP, SERVICE_INFO)
+            advertizer.start(GROUP, SERVICE)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
@@ -37,7 +44,7 @@ class ApiIntegrationTest(TestCase):
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
 
     def test_discoverer_caches_advertised_services(self):
         # Given
@@ -46,10 +53,24 @@ class ApiIntegrationTest(TestCase):
         with (Hello.builder(config).advertizer().default() as advertizer1,
               Hello.builder(config).advertizer().default() as advertizer2,
               Hello.builder(config).discoverer().default() as discoverer):
-            service_info1 = ServiceInfo(uuid4(), 'test-service1', 'test-role', {'test': 'http://localhost:8080'})
-            service_info2 = ServiceInfo(uuid4(), 'test-service2', 'test-role', {'test': 'http://localhost:8080'})
-            advertizer1.start(GROUP, service_info1)
-            advertizer2.start(GROUP, service_info2)
+            service1 = Service(
+                uuid4(),
+                'test-service1',
+                'test-role',
+                {'test': 'http://localhost:8080'},
+                {'site': 'site1', 'range': 'range1'},
+                '192.168.1.101'
+            )
+            service2 = Service(
+                uuid4(),
+                'test-service2',
+                'test-role',
+                {'test': 'http://localhost:8080'},
+                {'site': 'site2', 'range': 'range2'},
+                '192.168.1.102'
+            )
+            advertizer1.start(GROUP, service1)
+            advertizer2.start(GROUP, service2)
             discoverer.start(GROUP, ServiceQuery('test-service.+', 'test-role'))
 
             # When
@@ -61,8 +82,8 @@ class ApiIntegrationTest(TestCase):
 
             # Then
             self.assertEqual({
-                service_info1.uuid: service_info1,
-                service_info2.uuid: service_info2
+                service1.uuid: service1,
+                service2.uuid: service2
             }, discoverer.get_services())
 
     def test_discoverer_caches_advertised_service_when_advertisement_scheduled_once(self):
@@ -71,7 +92,7 @@ class ApiIntegrationTest(TestCase):
 
         with (Hello.builder(config).advertizer().scheduled() as advertizer,
               Hello.builder(config).discoverer().default() as discoverer):
-            advertizer.start(GROUP, SERVICE_INFO)
+            advertizer.start(GROUP, SERVICE)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
@@ -80,7 +101,7 @@ class ApiIntegrationTest(TestCase):
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
 
     def test_discoverer_caches_advertised_service_when_advertisement_scheduled_periodically(self):
         # Given
@@ -88,7 +109,7 @@ class ApiIntegrationTest(TestCase):
 
         with (Hello.builder(config).advertizer().scheduled() as advertizer,
               Hello.builder(config).discoverer().default() as discoverer):
-            advertizer.start(GROUP, SERVICE_INFO)
+            advertizer.start(GROUP, SERVICE)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
@@ -97,7 +118,7 @@ class ApiIntegrationTest(TestCase):
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
 
     def test_discoverer_caches_discovery_response_service(self):
         # Given
@@ -105,7 +126,7 @@ class ApiIntegrationTest(TestCase):
 
         with (Hello.builder(config).advertizer().default() as advertizer,
               Hello.builder(config).discoverer().default() as discoverer):
-            advertizer.start(GROUP, SERVICE_INFO)
+            advertizer.start(GROUP, SERVICE)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
@@ -114,7 +135,7 @@ class ApiIntegrationTest(TestCase):
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
 
     def test_discoverer_caches_discovery_response_services(self):
         # Given
@@ -123,10 +144,24 @@ class ApiIntegrationTest(TestCase):
         with (Hello.builder(config).advertizer().default() as advertizer1,
               Hello.builder(config).advertizer().default() as advertizer2,
               Hello.builder(config).discoverer().default() as discoverer):
-            service_info1 = ServiceInfo(uuid4(), 'test-service1', 'test-role', {'test': 'http://localhost:8080'})
-            service_info2 = ServiceInfo(uuid4(), 'test-service2', 'test-role', {'test': 'http://localhost:8080'})
-            advertizer1.start(GROUP, service_info1)
-            advertizer2.start(GROUP, service_info2)
+            service1 = Service(
+                uuid4(),
+                'test-service1',
+                'test-role',
+                {'test': 'http://localhost:8080'},
+                {'site': 'site1', 'range': 'range1'},
+                '192.168.1.101'
+            )
+            service2 = Service(
+                uuid4(),
+                'test-service2',
+                'test-role',
+                {'test': 'http://localhost:8080'},
+                {'site': 'site2', 'range': 'range2'},
+                '192.168.1.102'
+            )
+            advertizer1.start(GROUP, service1)
+            advertizer2.start(GROUP, service2)
             discoverer.start(GROUP, ServiceQuery('test-service.+', 'test-role'))
 
             # When
@@ -136,8 +171,8 @@ class ApiIntegrationTest(TestCase):
 
         # Then
         self.assertEqual({
-            service_info1.uuid: service_info1,
-            service_info2.uuid: service_info2
+            service1.uuid: service1,
+            service2.uuid: service2
         }, discoverer.get_services())
 
     def test_discoverer_caches_discovery_response_service_when_discovery_scheduled_once(self):
@@ -146,7 +181,7 @@ class ApiIntegrationTest(TestCase):
 
         with (Hello.builder(config).advertizer().default() as advertizer,
               Hello.builder(config).discoverer().scheduled() as discoverer):
-            advertizer.start(GROUP, SERVICE_INFO)
+            advertizer.start(GROUP, SERVICE)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
@@ -155,7 +190,7 @@ class ApiIntegrationTest(TestCase):
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
 
     def test_discoverer_caches_discovery_response_service_when_discovery_scheduled_periodically(self):
         # Given
@@ -163,7 +198,7 @@ class ApiIntegrationTest(TestCase):
 
         with (Hello.builder(config).advertizer().default() as advertizer,
               Hello.builder(config).discoverer().scheduled() as discoverer):
-            advertizer.start(GROUP, SERVICE_INFO)
+            advertizer.start(GROUP, SERVICE)
             discoverer.start(GROUP, SERVICE_QUERY)
 
             # When
@@ -172,7 +207,7 @@ class ApiIntegrationTest(TestCase):
             wait_for_assertion(1, lambda: self.assertEqual(1, len(discoverer.get_services())))
 
         # Then
-        self.assertEqual({SERVICE_INFO.uuid: SERVICE_INFO}, discoverer.get_services())
+        self.assertEqual({SERVICE.uuid: SERVICE}, discoverer.get_services())
 
 
 if __name__ == '__main__':

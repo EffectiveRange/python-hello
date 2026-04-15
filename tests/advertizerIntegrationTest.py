@@ -7,11 +7,11 @@ from context_logger import setup_logging
 from test_utility import wait_for_assertion
 from zmq import Context
 
-from hello import DefaultAdvertizer, ServiceInfo, Group, RadioSender, DishReceiver, RespondingAdvertizer, \
+from hello import DefaultAdvertizer, Service, Group, RadioSender, DishReceiver, RespondingAdvertizer, \
     ServiceQuery, ScheduledAdvertizer
 
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
-SERVICE_INFO = ServiceInfo(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
+SERVICE = Service(uuid4(), 'test-service', 'test-role', {'test': 'http://localhost:8080'})
 
 
 class AdvertizerIntegrationTest(TestCase):
@@ -35,12 +35,12 @@ class AdvertizerIntegrationTest(TestCase):
             advertizer.start(GROUP)
 
             # When
-            advertizer.advertise(SERVICE_INFO)
+            advertizer.advertise(SERVICE)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
-        self.assertEqual([SERVICE_INFO.to_dict()], messages)
+        self.assertEqual([SERVICE.to_dict()], messages)
 
     def test_sends_hello_when_query_received(self):
         # Given
@@ -56,7 +56,7 @@ class AdvertizerIntegrationTest(TestCase):
             test_receiver.start(GROUP.hello())
             test_receiver.register(lambda message: messages.append(message))
 
-            advertizer.start(GROUP, SERVICE_INFO)
+            advertizer.start(GROUP, SERVICE)
 
             # When
             test_sender.send(ServiceQuery('test-service', 'test-role'))
@@ -64,9 +64,9 @@ class AdvertizerIntegrationTest(TestCase):
             wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
-        self.assertEqual([SERVICE_INFO.to_dict()], messages)
+        self.assertEqual([SERVICE.to_dict()], messages)
 
-    def test_sends_hello_when_info_changed_and_query_received(self):
+    def test_sends_hello_when_service_changed_and_query_received(self):
         # Given
         context = Context()
         sender = RadioSender(context)
@@ -81,17 +81,17 @@ class AdvertizerIntegrationTest(TestCase):
             test_receiver.register(lambda message: messages.append(message))
 
             advertizer.start(GROUP)
-            advertizer.advertise(SERVICE_INFO)
+            advertizer.advertise(SERVICE)
 
             query = ServiceQuery('test-service', 'test-role')
             test_sender.send(query)
 
             wait_for_assertion(1, lambda: self.assertEqual(2, len(messages)))
 
-            new_service_info = ServiceInfo(
-                SERVICE_INFO.uuid, SERVICE_INFO.name, SERVICE_INFO.role, {'test': 'http://localhost:9090'}
+            new_service = Service(
+                SERVICE.uuid, SERVICE.name, SERVICE.role, {'test': 'http://localhost:9090'}
             )
-            advertizer.advertise(new_service_info)
+            advertizer.advertise(new_service)
 
             # When
             test_sender.send(query)
@@ -100,7 +100,7 @@ class AdvertizerIntegrationTest(TestCase):
 
         # Then
         self.assertEqual([
-            SERVICE_INFO.to_dict(), SERVICE_INFO.to_dict(), new_service_info.to_dict(), new_service_info.to_dict()
+            SERVICE.to_dict(), SERVICE.to_dict(), new_service.to_dict(), new_service.to_dict()
         ], messages)
 
     def test_sends_hello_when_schedules_advertisement_once(self):
@@ -117,12 +117,12 @@ class AdvertizerIntegrationTest(TestCase):
             scheduled_advertizer.start(GROUP)
 
             # When
-            scheduled_advertizer.schedule_one_shot(SERVICE_INFO, interval=0.01)
+            scheduled_advertizer.schedule_one_shot(SERVICE, interval=0.01)
 
             wait_for_assertion(1, lambda: self.assertEqual(1, len(messages)))
 
         # Then
-        self.assertEqual([SERVICE_INFO.to_dict()], messages)
+        self.assertEqual([SERVICE.to_dict()], messages)
 
     def test_sends_hello_when_schedules_advertisement_periodically(self):
         # Given
@@ -138,7 +138,7 @@ class AdvertizerIntegrationTest(TestCase):
             scheduled_advertizer.start(GROUP)
 
             # When
-            scheduled_advertizer.schedule_periodic(SERVICE_INFO, interval=0.01)
+            scheduled_advertizer.schedule_periodic(SERVICE, interval=0.01)
 
             # Then
             wait_for_assertion(1, lambda: self.assertTrue(len(messages) >= 10))
