@@ -142,7 +142,7 @@ class DefaultDiscoverer(Discoverer):
                 return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.UPDATED)
             else:
                 log.debug('Service unchanged', group=group, service=service)
-                return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.UPDATED)
+                return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.UNCHANGED)
         else:
             log.info('Service discovered', group=group, service=service)
             return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.DISCOVERED)
