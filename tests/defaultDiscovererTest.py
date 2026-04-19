@@ -9,7 +9,6 @@ from test_utility import wait_for_assertion
 from hello import Service, Group, ServiceQuery, DefaultDiscoverer, Sender, Receiver, OnDiscoveryEvent, \
     DiscoveryEventType, DiscoveryEvent
 
-
 GROUP = Group('test-group', 'udp://239.0.0.1:5555')
 SERVICE_QUERY = ServiceQuery('test-.*', 'test-.*')
 SERVICE = Service(
@@ -185,7 +184,7 @@ class DefaultDiscovererTest(TestCase):
         discoverer = DefaultDiscoverer(sender, receiver)
         discoverer.start(GROUP, SERVICE_QUERY)
         handler = MagicMock(spec=OnDiscoveryEvent)
-        discoverer.register(handler)
+        discoverer.register(handler, {DiscoveryEventType.DISCOVERED, DiscoveryEventType.UPDATED})
         discoverer._handle_message(SERVICE.to_dict())
         handler.reset_mock()
 
@@ -193,7 +192,8 @@ class DefaultDiscovererTest(TestCase):
         discoverer._handle_message(SERVICE.to_dict())
 
         # Then
-        handler.assert_not_called()
+        with self.assertRaises(AssertionError):
+            wait_for_assertion(0.1, lambda: handler.assert_called())
 
     def test_handles_handler_error_gracefully(self):
         # Given
