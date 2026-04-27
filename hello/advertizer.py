@@ -12,10 +12,14 @@ from context_logger import get_logger
 
 from hello import Service, Group, Sender, Receiver, ServiceMatcher, ServiceQuery, AbstractScheduler
 
-log = get_logger('Advertizer')
-
 
 class Advertizer:
+
+    def __enter__(self) -> 'Advertizer':
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.stop()
 
     def start(self, group: Group, service: Service | None = None) -> None:
         raise NotImplementedError()
@@ -33,24 +37,19 @@ class DefaultAdvertizer(Advertizer):
         self._sender = sender
         self._group: Group | None = None
         self._service: Service | None = None
-
-    def __enter__(self) -> Advertizer:
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        self.stop()
+        self.log = get_logger(type(self).__name__)
 
     def start(self, group: Group, service: Service | None = None) -> None:
         self._sender.start(group.hello())
         self._group = group
         self._service = service
-        log.info('Advertizer started', group=self._group, service=self._service)
+        self.log.info('Advertizer started', group=self._group, service=self._service)
 
     def stop(self) -> None:
         self._group = None
         self._service = None
         self._sender.stop()
-        log.info('Advertizer stopped')
+        self.log.info('Advertizer stopped')
 
     def advertise(self, service: Service | None = None, log_level: int = INFO) -> None:
         if self._group:
@@ -58,11 +57,11 @@ class DefaultAdvertizer(Advertizer):
                 self._service = service
             if self._service:
                 self._sender.send(self._service)
-                log.log(log_level, 'Service advertised', service=self._service, group=self._group)
+                self.log.log(log_level, 'Service advertised', service=self._service, group=self._group)
             else:
-                log.warning('Cannot advertise service, no service provided', group=self._group)
+                self.log.warning('Cannot advertise service, no service provided', group=self._group)
         else:
-            log.warning('Cannot advertise service, advertizer not started', service=service)
+            self.log.warning('Cannot advertise service, advertizer not started', service=service)
 
 
 class RespondingAdvertizer(DefaultAdvertizer):
@@ -87,17 +86,17 @@ class RespondingAdvertizer(DefaultAdvertizer):
             try:
                 query = ServiceQuery(**message)
                 matcher = ServiceMatcher(query)
-                log.debug('Service query received', group=self._group, query=query)
+                self.log.debug('Service query received', group=self._group, query=query)
                 self._handle_query(matcher, self._service)
             except Exception as error:
-                log.warning('Invalid service query received', group=self._group, received=message, error=error)
+                self.log.warning('Invalid service query received', group=self._group, received=message, error=error)
 
     def _handle_query(self, matcher: ServiceMatcher, service: Service) -> None:
         if matcher.matches(service):
             delay = round(self._max_delay * random.random(), 3)
-            log.info('Responding to query', group=self._group, query=matcher.query, service=service, delay=delay)
+            self.log.info('Responding to query', group=self._group, query=matcher.query, delay=delay)
             time.sleep(delay)
-            self.advertise(service)
+            self.advertise(service, DEBUG)
 
 
 class ScheduledAdvertizer(AbstractScheduler[Service], Advertizer):

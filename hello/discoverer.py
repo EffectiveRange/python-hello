@@ -14,8 +14,6 @@ from context_logger import get_logger
 
 from hello import Group, ServiceQuery, Sender, Receiver, Service, ServiceMatcher, AbstractScheduler
 
-log = get_logger('Discoverer')
-
 
 class DiscoveryEventType(Enum):
     DISCOVERED = 'discovered'
@@ -36,6 +34,12 @@ class OnDiscoveryEvent(Protocol):
 
 
 class Discoverer:
+
+    def __enter__(self) -> 'Discoverer':
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.stop()
 
     def start(self, group: Group, query: ServiceQuery | None = None) -> None:
         raise NotImplementedError()
@@ -68,12 +72,7 @@ class DefaultDiscoverer(Discoverer):
             event_type: [] for event_type in DiscoveryEventType
         }
         self._handler_executor = ThreadPoolExecutor(max_workers=max_workers)
-
-    def __enter__(self) -> Discoverer:
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        self.stop()
+        self.log = get_logger(type(self).__name__)
 
     def start(self, group: Group, query: ServiceQuery | None = None) -> None:
         self._group = group
@@ -82,7 +81,7 @@ class DefaultDiscoverer(Discoverer):
         self._sender.start(group.query())
         self._receiver.register(self._handle_message)
         self._receiver.start(group.hello())
-        log.info('Discoverer started', group=self._group, query=query)
+        self.log.info('Discoverer started', group=self._group, query=query)
 
     def stop(self) -> None:
         self._group = None
@@ -90,7 +89,7 @@ class DefaultDiscoverer(Discoverer):
         self._sender.stop()
         self._receiver.deregister(self._handle_message)
         self._receiver.stop()
-        log.info('Discoverer stopped')
+        self.log.info('Discoverer stopped')
 
     def discover(self, query: ServiceQuery | None = None, log_level: int = INFO) -> None:
         if self._group:
@@ -98,11 +97,11 @@ class DefaultDiscoverer(Discoverer):
                 self._matcher = ServiceMatcher(query)
             if self._matcher:
                 self._sender.send(self._matcher.query)
-                log.log(log_level, 'Service discovery initiated', group=self._group, query=self._matcher.query)
+                self.log.log(log_level, 'Service discovery initiated', group=self._group, query=self._matcher.query)
             else:
-                log.warning('Cannot discover services, no query provided', group=self._group)
+                self.log.warning('Cannot discover services, no query provided', group=self._group)
         else:
-            log.warning('Cannot discover services, discoverer not started', query=query)
+            self.log.warning('Cannot discover services, discoverer not started', query=query)
 
     def register(self, handler: OnDiscoveryEvent, types: set[DiscoveryEventType] | None = None) -> None:
         for event_type in types if types else self._get_event_types():
@@ -123,10 +122,10 @@ class DefaultDiscoverer(Discoverer):
             try:
                 service = Service(UUID(message['uuid']), message['name'], message['role'],
                                   message.get('urls', {}), message.get('info', {}), message['address'])
-                log.debug('Service received', service=service, group=self._group)
+                self.log.debug('Service received', service=service, group=self._group)
                 self._handle_service(service, self._group, self._matcher)
             except Exception as error:
-                log.warn('Invalid service received', group=self._group, data=message, error=error)
+                self.log.warn('Invalid service received', group=self._group, data=message, error=error)
 
     def _handle_service(self, service: Service, group: Group, matcher: ServiceMatcher) -> None:
         if matcher.matches(service):
@@ -138,13 +137,13 @@ class DefaultDiscoverer(Discoverer):
                       service: Service) -> DiscoveryEvent:
         if stored:
             if stored != service:
-                log.info('Service updated', group=group, old_service=stored, new_service=service)
+                self.log.info('Service updated', group=group, old_service=stored, new_service=service)
                 return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.UPDATED)
             else:
-                log.debug('Service unchanged', group=group, service=service)
+                self.log.debug('Service unchanged', group=group, service=service)
                 return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.UNCHANGED)
         else:
-            log.info('Service discovered', group=group, service=service)
+            self.log.info('Service discovered', group=group, service=service)
             return DiscoveryEvent(group, matcher.query, service, DiscoveryEventType.DISCOVERED)
 
     def _handle_event(self, event: DiscoveryEvent) -> None:
@@ -157,7 +156,7 @@ class DefaultDiscoverer(Discoverer):
         try:
             handler(event)
         except Exception as error:
-            log.warn('Error in event handler execution', event=event, error=error)
+            self.log.warn('Error in event handler execution', event=event, error=error)
 
 
 class ScheduledDiscoverer(AbstractScheduler[ServiceQuery], Discoverer):

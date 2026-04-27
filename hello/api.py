@@ -9,7 +9,7 @@ from common_utility import ReusableTimer
 from zmq import Context
 
 from hello import RadioSender, DishReceiver, DefaultAdvertizer, DefaultDiscoverer, \
-    RespondingAdvertizer, ScheduledAdvertizer, ScheduledDiscoverer
+    RespondingAdvertizer, ScheduledAdvertizer, ScheduledDiscoverer, Advertizer, Discoverer
 
 
 @dataclass
@@ -25,7 +25,7 @@ class HelloConfig:
 class Hello(object):
 
     @classmethod
-    def default_advertizer(cls, config: HelloConfig) -> DefaultAdvertizer:
+    def default_advertizer(cls, config: HelloConfig) -> Advertizer:
         sender = RadioSender(config.context)
         if config.advertizer_responder:
             receiver = DishReceiver(config.context, config.receiver_max_workers, config.receiver_poll_timeout)
@@ -39,7 +39,7 @@ class Hello(object):
         return ScheduledAdvertizer(advertizer, ReusableTimer())
 
     @classmethod
-    def default_discoverer(cls, config: HelloConfig) -> DefaultDiscoverer:
+    def default_discoverer(cls, config: HelloConfig) -> Discoverer:
         sender = RadioSender(config.context)
         receiver = DishReceiver(config.context, config.receiver_max_workers, config.receiver_poll_timeout)
         return DefaultDiscoverer(sender, receiver, config.discoverer_max_workers)
@@ -59,7 +59,7 @@ class AdvertizerBuilder(object):
     def __init__(self, config: HelloConfig) -> None:
         self._config = config
 
-    def default(self) -> DefaultAdvertizer:
+    def default(self) -> Advertizer:
         return Hello.default_advertizer(self._config)
 
     def scheduled(self) -> ScheduledAdvertizer:
@@ -71,7 +71,7 @@ class DiscovererBuilder(object):
     def __init__(self, config: HelloConfig) -> None:
         self._config = config
 
-    def default(self) -> DefaultDiscoverer:
+    def default(self) -> Discoverer:
         return Hello.default_discoverer(self._config)
 
     def scheduled(self) -> ScheduledDiscoverer:

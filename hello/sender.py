@@ -9,10 +9,14 @@ from zmq import Context, RADIO, Socket
 
 from hello import PrefixedGroup
 
-log = get_logger('Sender')
-
 
 class Sender:
+
+    def __enter__(self) -> 'Sender':
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.stop()
 
     def start(self, group: PrefixedGroup) -> None:
         raise NotImplementedError()
@@ -30,12 +34,7 @@ class RadioSender(Sender):
         self._context = context
         self._radio: Socket[bytes] = self._context.socket(RADIO)
         self._group: str | None = None
-
-    def __enter__(self) -> Sender:
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        self.stop()
+        self.log = get_logger(type(self).__name__)
 
     def start(self, group: PrefixedGroup) -> None:
         try:
@@ -43,18 +42,18 @@ class RadioSender(Sender):
                 raise RuntimeError('Sender already started')
             self._radio.connect(group.url)
             self._group = group.name
-            log.debug('Sender started', url=group.url, group=group.name)
+            self.log.debug('Sender started', url=group.url, group=group.name)
         except Exception as error:
-            log.error('Failed to start sender', url=group.url, group=group.name, error=error)
+            self.log.error('Failed to start sender', url=group.url, group=group.name, error=error)
             raise error
 
     def stop(self) -> None:
         try:
             self._radio.close()
             self._group = None
-            log.debug('Sender stopped')
+            self.log.debug('Sender stopped')
         except Exception as error:
-            log.error('Failed to stop sender', error=error)
+            self.log.error('Failed to stop sender', error=error)
             raise error
 
     def send(self, data: Any) -> None:
@@ -62,9 +61,9 @@ class RadioSender(Sender):
             if message := self._convert_to_dict(data):
                 self._send_json(message)
             else:
-                log.warning('Unsupported message type', data=data, group=self._group)
+                self.log.warning('Unsupported message type', data=data, group=self._group)
         else:
-            log.warning('Cannot send message, sender not started', data=data)
+            self.log.warning('Cannot send message, sender not started', data=data)
 
     def _convert_to_dict(self, data: Any) -> dict[str, Any] | None:
         if isinstance(data, dict):
@@ -80,6 +79,6 @@ class RadioSender(Sender):
     def _send_json(self, data: dict[str, Any]) -> None:
         try:
             self._radio.send_json(data, group=self._group)
-            log.debug('Message sent', data=data, group=self._group)
+            self.log.debug('Message sent', data=data, group=self._group)
         except Exception as error:
-            log.error('Failed to send message', data=data, group=self._group, error=error)
+            self.log.error('Failed to send message', data=data, group=self._group, error=error)
