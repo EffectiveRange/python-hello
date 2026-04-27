@@ -7,8 +7,6 @@ from typing import TypeVar, Generic, Any
 from common_utility import IReusableTimer
 from context_logger import get_logger
 
-log = get_logger('Scheduler')
-
 T = TypeVar('T')
 
 
@@ -29,6 +27,7 @@ class AbstractScheduler(Scheduler[T]):
     def __init__(self, timer: IReusableTimer, interval: float = 60) -> None:
         self._timer = timer
         self._interval = interval
+        self.log = get_logger(type(self).__name__)
 
     def __enter__(self) -> Scheduler[T]:
         return self
@@ -37,14 +36,14 @@ class AbstractScheduler(Scheduler[T]):
         self.stop()
 
     def schedule_one_shot(self, data: T | None = None, interval: float | None = None) -> None:
-        interval = interval or self._interval
-        self._timer.start(interval, self._safe_execute, [data])
-        log.info('One-shot execution scheduled', data=data, interval=interval)
+        resolved_interval: float = self._interval if interval is None else interval
+        self._timer.start(resolved_interval, self._safe_execute, [data])
+        self.log.info('One-shot execution scheduled', data=data, interval=resolved_interval)
 
     def schedule_periodic(self, data: T | None = None, interval: float | None = None) -> None:
-        interval = interval or self._interval
-        self._timer.start(interval, self._execute_and_restart, [data])
-        log.info('Periodic execution scheduled', data=data, interval=interval)
+        resolved_interval: float = self._interval if interval is None else interval
+        self._timer.start(resolved_interval, self._execute_and_restart, [data])
+        self.log.info('Periodic execution scheduled', data=data, interval=resolved_interval)
 
     def stop(self) -> None:
         self._timer.cancel()
@@ -60,4 +59,4 @@ class AbstractScheduler(Scheduler[T]):
         try:
             self._execute(data)
         except Exception as e:
-            log.error('Error during scheduled execution', error=e, data=data)
+            self.log.error('Error during scheduled execution', error=e, data=data)

@@ -10,14 +10,18 @@ from zmq import DISH, Poller, POLLIN, Context
 
 from hello import PrefixedGroup
 
-log = get_logger('Receiver')
-
 
 class OnMessage(Protocol):
     def __call__(self, message: dict[str, Any]) -> None: ...
 
 
 class Receiver:
+
+    def __enter__(self) -> 'Receiver':
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.stop()
 
     def start(self, group: PrefixedGroup) -> None:
         raise NotImplementedError()
@@ -43,12 +47,7 @@ class DishReceiver(Receiver):
         self._poll_timeout = int(poll_timeout * 1000)
         self._group: str | None = None
         self._handlers: list[OnMessage] = []
-
-    def __enter__(self) -> Receiver:
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        self.stop()
+        self.log = get_logger(type(self).__name__)
 
     def start(self, group: PrefixedGroup) -> None:
         try:
@@ -59,9 +58,9 @@ class DishReceiver(Receiver):
             self._dish.join(group.name)
             self._group = group.name
             self._loop_executor.submit(self._receive_loop)
-            log.debug('Receiver started', url=group.url, group=group.name)
+            self.log.debug('Receiver started', url=group.url, group=group.name)
         except Exception as error:
-            log.error('Failed to start receiver', url=group.url, group=group.name, error=error)
+            self.log.error('Failed to start receiver', url=group.url, group=group.name, error=error)
             raise error
 
     def stop(self) -> None:
@@ -69,9 +68,9 @@ class DishReceiver(Receiver):
             self._group = None
             self._loop_executor.shutdown()
             self._dish.close()
-            log.debug('Receiver stopped')
+            self.log.debug('Receiver stopped')
         except Exception as error:
-            log.error('Failed to stop receiver', error=error)
+            self.log.error('Failed to stop receiver', error=error)
             raise error
 
     def register(self, handler: OnMessage) -> None:
@@ -88,10 +87,10 @@ class DishReceiver(Receiver):
                     message = self._dish.recv_json()
                     self._handle_message(message)
             except Exception as error:
-                log.error('Failed to receive message', group=self._group, error=error)
+                self.log.error('Failed to receive message', group=self._group, error=error)
 
     def _handle_message(self, message: dict[str, Any]) -> None:
-        log.debug('Message received', data=message, group=self._group)
+        self.log.debug('Message received', data=message, group=self._group)
         for handler in self._handlers:
             self._handler_executor.submit(self._execute_handler, handler, message)
 
@@ -99,4 +98,4 @@ class DishReceiver(Receiver):
         try:
             handler(message)
         except Exception as error:
-            log.warn('Handler failed to process message', data=message, group=self._group, error=error)
+            self.log.warn('Handler failed to process message', data=message, group=self._group, error=error)
