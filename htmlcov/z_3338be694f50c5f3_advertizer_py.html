@@ -67,7 +67,7 @@
             <a id="nextFileLink" class="nav" href="z_3338be694f50c5f3_api_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
-            created at 2026-04-27 16:53 +0000
+            created at 2026-05-08 06:13 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -178,7 +178,7 @@
     <p class="run"><span class="n"><a id="t94" href="#t94">94</a></span><span class="t">    <span class="key">def</span> <span class="nam">_handle_query</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">matcher</span><span class="op">:</span> <span class="nam">ServiceMatcher</span><span class="op">,</span> <span class="nam">service</span><span class="op">:</span> <span class="nam">Service</span><span class="op">)</span> <span class="op">-></span> <span class="key">None</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t95" href="#t95">95</a></span><span class="t">        <span class="key">if</span> <span class="nam">matcher</span><span class="op">.</span><span class="nam">matches</span><span class="op">(</span><span class="nam">service</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t96" href="#t96">96</a></span><span class="t">            <span class="nam">delay</span> <span class="op">=</span> <span class="nam">round</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">_max_delay</span> <span class="op">*</span> <span class="nam">random</span><span class="op">.</span><span class="nam">random</span><span class="op">(</span><span class="op">)</span><span class="op">,</span> <span class="num">3</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t97" href="#t97">97</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">log</span><span class="op">.</span><span class="nam">info</span><span class="op">(</span><span class="str">'Responding to query'</span><span class="op">,</span> <span class="nam">group</span><span class="op">=</span><span class="nam">self</span><span class="op">.</span><span class="nam">_group</span><span class="op">,</span> <span class="nam">query</span><span class="op">=</span><span class="nam">matcher</span><span class="op">.</span><span class="nam">query</span><span class="op">,</span> <span class="nam">delay</span><span class="op">=</span><span class="nam">delay</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t97" href="#t97">97</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">log</span><span class="op">.</span><span class="nam">debug</span><span class="op">(</span><span class="str">'Responding to query'</span><span class="op">,</span> <span class="nam">group</span><span class="op">=</span><span class="nam">self</span><span class="op">.</span><span class="nam">_group</span><span class="op">,</span> <span class="nam">query</span><span class="op">=</span><span class="nam">matcher</span><span class="op">.</span><span class="nam">query</span><span class="op">,</span> <span class="nam">delay</span><span class="op">=</span><span class="nam">delay</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t98" href="#t98">98</a></span><span class="t">            <span class="nam">time</span><span class="op">.</span><span class="nam">sleep</span><span class="op">(</span><span class="nam">delay</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t99" href="#t99">99</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">advertise</span><span class="op">(</span><span class="nam">service</span><span class="op">,</span> <span class="nam">DEBUG</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t100" href="#t100">100</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
@@ -216,7 +216,7 @@
             <a class="nav" href="z_3338be694f50c5f3_api_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
-            created at 2026-04-27 16:53 +0000
+            created at 2026-05-08 06:13 +0000
         </p>
     </div>
 </footer>
