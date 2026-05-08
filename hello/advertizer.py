@@ -94,7 +94,7 @@ class RespondingAdvertizer(DefaultAdvertizer):
     def _handle_query(self, matcher: ServiceMatcher, service: Service) -> None:
         if matcher.matches(service):
             delay = round(self._max_delay * random.random(), 3)
-            self.log.info('Responding to query', group=self._group, query=matcher.query, delay=delay)
+            self.log.debug('Responding to query', group=self._group, query=matcher.query, delay=delay)
             time.sleep(delay)
             self.advertise(service, DEBUG)
 
