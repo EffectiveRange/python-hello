@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
 # SPDX-License-Identifier: MIT
 
+from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Any
 
 from common_utility import IReusableTimer
@@ -10,16 +11,16 @@ from context_logger import get_logger
 T = TypeVar('T')
 
 
-class Scheduler(Generic[T]):
+class Scheduler(Generic[T], ABC):
 
-    def schedule_one_shot(self, data: T | None = None, interval: float | None = None) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def schedule_one_shot(self, data: T | None = None, interval: float | None = None) -> None: ...
 
-    def schedule_periodic(self, data: T | None = None, interval: float | None = None) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def schedule_periodic(self, data: T | None = None, interval: float | None = None) -> None: ...
 
-    def stop(self) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def stop(self) -> None: ...
 
 
 class AbstractScheduler(Scheduler[T]):
@@ -48,8 +49,8 @@ class AbstractScheduler(Scheduler[T]):
     def stop(self) -> None:
         self._timer.cancel()
 
-    def _execute(self, data: T | None = None) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def _execute(self, data: T | None = None) -> None: ...
 
     def _execute_and_restart(self, data: T | None = None) -> None:
         self._safe_execute(data)
@@ -58,5 +59,5 @@ class AbstractScheduler(Scheduler[T]):
     def _safe_execute(self, data: T | None = None) -> None:
         try:
             self._execute(data)
-        except Exception as e:
-            self.log.error('Error during scheduled execution', error=e, data=data)
+        except Exception as error:
+            self.log.error('Error during scheduled execution', error=error, data=data)

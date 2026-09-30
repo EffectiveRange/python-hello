@@ -2,15 +2,16 @@
 # SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
 # SPDX-License-Identifier: MIT
 
+from abc import ABC, abstractmethod
+
+from common_utility import IReusableTimer
 from concurrent.futures import ThreadPoolExecutor
+from context_logger import get_logger
 from dataclasses import dataclass
 from enum import Enum
 from logging import INFO, DEBUG
 from typing import Any, Protocol
 from uuid import UUID
-
-from common_utility import IReusableTimer
-from context_logger import get_logger
 
 from hello import Group, ServiceQuery, Sender, Receiver, Service, ServiceMatcher, AbstractScheduler
 
@@ -33,7 +34,7 @@ class OnDiscoveryEvent(Protocol):
     def __call__(self, event: DiscoveryEvent) -> None: ...
 
 
-class Discoverer:
+class Discoverer(ABC):
 
     def __enter__(self) -> 'Discoverer':
         return self
@@ -41,23 +42,23 @@ class Discoverer:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, group: Group, query: ServiceQuery | None = None) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def start(self, group: Group, query: ServiceQuery | None = None) -> None: ...
 
-    def stop(self) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def stop(self) -> None: ...
 
-    def discover(self, query: ServiceQuery | None = None, log_level: int = INFO) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def discover(self, query: ServiceQuery | None = None, log_level: int = INFO) -> None: ...
 
-    def register(self, handler: OnDiscoveryEvent, types: set[DiscoveryEventType] | None = None) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def register(self, handler: OnDiscoveryEvent, types: set[DiscoveryEventType] | None = None) -> None: ...
 
-    def deregister(self, handler: OnDiscoveryEvent, types: set[DiscoveryEventType] | None = None) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def deregister(self, handler: OnDiscoveryEvent, types: set[DiscoveryEventType] | None = None) -> None: ...
 
-    def get_services(self) -> dict[UUID, Service]:
-        raise NotImplementedError()
+    @abstractmethod
+    def get_services(self) -> dict[UUID, Service]: ...
 
 
 class DefaultDiscoverer(Discoverer):
@@ -190,5 +191,5 @@ class ScheduledDiscoverer(AbstractScheduler[ServiceQuery], Discoverer):
     def deregister(self, handler: OnDiscoveryEvent, types: set[DiscoveryEventType] | None = None) -> None:
         self._discoverer.deregister(handler, types)
 
-    def _execute(self, query: ServiceQuery | None = None) -> None:
-        self.discover(query, DEBUG)
+    def _execute(self, data: ServiceQuery | None = None) -> None:
+        self.discover(data, DEBUG)

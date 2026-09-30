@@ -16,6 +16,10 @@
     {
       "name": "python3-common-utility",
       "hostinstall": true
+    },
+    {
+      "name": "python3-scikit-build-core",
+      "hostinstall": true
     }
   ]
 }

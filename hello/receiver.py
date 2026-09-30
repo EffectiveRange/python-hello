@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
 # SPDX-License-Identifier: MIT
 
+from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Protocol
 
@@ -15,7 +16,7 @@ class OnMessage(Protocol):
     def __call__(self, message: dict[str, Any]) -> None: ...
 
 
-class Receiver:
+class Receiver(ABC):
 
     def __enter__(self) -> 'Receiver':
         return self
@@ -23,17 +24,17 @@ class Receiver:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, group: PrefixedGroup) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def start(self, group: PrefixedGroup) -> None: ...
 
-    def stop(self) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def stop(self) -> None: ...
 
-    def register(self, handler: OnMessage) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def register(self, handler: OnMessage) -> None: ...
 
-    def deregister(self, handler: OnMessage) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def deregister(self, handler: OnMessage) -> None: ...
 
 
 class DishReceiver(Receiver):
