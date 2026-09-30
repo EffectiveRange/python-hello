@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
 # SPDX-License-Identifier: MIT
 
+from abc import ABC, abstractmethod
 import random
 import time
 from logging import INFO, DEBUG
@@ -13,7 +14,7 @@ from context_logger import get_logger
 from hello import Service, Group, Sender, Receiver, ServiceMatcher, ServiceQuery, AbstractScheduler
 
 
-class Advertizer:
+class Advertizer(ABC):
 
     def __enter__(self) -> 'Advertizer':
         return self
@@ -21,14 +22,14 @@ class Advertizer:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, group: Group, service: Service | None = None) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def start(self, group: Group, service: Service | None = None) -> None: ...
 
-    def stop(self) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def stop(self) -> None: ...
 
-    def advertise(self, service: Service | None = None, log_level: int = INFO) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def advertise(self, service: Service | None = None, log_level: int = INFO) -> None: ...
 
 
 class DefaultAdvertizer(Advertizer):
@@ -121,5 +122,5 @@ class ScheduledAdvertizer(AbstractScheduler[Service], Advertizer):
     def advertise(self, service: Service | None = None, log_level: int = INFO) -> None:
         self._advertizer.advertise(service, log_level)
 
-    def _execute(self, service: Service | None = None) -> None:
-        self.advertise(service, DEBUG)
+    def _execute(self, data: Service | None = None) -> None:
+        self.advertise(data, DEBUG)

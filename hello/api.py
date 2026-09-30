@@ -22,7 +22,7 @@ class HelloConfig:
     discoverer_max_workers: int = 1
 
 
-class Hello(object):
+class Hello:
 
     @classmethod
     def default_advertizer(cls, config: HelloConfig) -> Advertizer:
@@ -54,7 +54,7 @@ class Hello(object):
         return HelloBuilder(config if config else HelloConfig())
 
 
-class AdvertizerBuilder(object):
+class AdvertizerBuilder:
 
     def __init__(self, config: HelloConfig) -> None:
         self._config = config
@@ -66,7 +66,7 @@ class AdvertizerBuilder(object):
         return Hello.scheduled_advertizer(self._config)
 
 
-class DiscovererBuilder(object):
+class DiscovererBuilder:
 
     def __init__(self, config: HelloConfig) -> None:
         self._config = config
@@ -78,7 +78,7 @@ class DiscovererBuilder(object):
         return Hello.scheduled_discoverer(self._config)
 
 
-class HelloBuilder(object):
+class HelloBuilder:
 
     def __init__(self, config: HelloConfig) -> None:
         self._config = config

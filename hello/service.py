@@ -33,12 +33,12 @@ class Service:
 
 
 @dataclass
-class ServiceQuery(object):
+class ServiceQuery:
     name: str
     role: str
 
 
-class ServiceMatcher(object):
+class ServiceMatcher:
 
     def __init__(self, query: ServiceQuery) -> None:
         self.query = query

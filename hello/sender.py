@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2024 Attila Gombos <attila.gombos@effective-range.com>
 # SPDX-License-Identifier: MIT
 
+from abc import ABC, abstractmethod
 from typing import Any, cast
 
 from context_logger import get_logger
@@ -10,7 +11,7 @@ from zmq import Context, RADIO, Socket
 from hello import PrefixedGroup
 
 
-class Sender:
+class Sender(ABC):
 
     def __enter__(self) -> 'Sender':
         return self
@@ -18,14 +19,14 @@ class Sender:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.stop()
 
-    def start(self, group: PrefixedGroup) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def start(self, group: PrefixedGroup) -> None: ...
 
-    def stop(self) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def stop(self) -> None: ...
 
-    def send(self, data: object) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def send(self, data: object) -> None: ...
 
 
 class RadioSender(Sender):
