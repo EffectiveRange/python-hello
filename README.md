@@ -5,15 +5,15 @@
 | Name                  |    Stmts |     Miss |   Branch |   BrPart |    Cover |   Missing |
 |---------------------- | -------: | -------: | -------: | -------: | -------: | --------: |
 | hello/\_\_init\_\_.py |        8 |        0 |        0 |        0 |     100% |           |
-| hello/advertizer.py   |       85 |        0 |       10 |        0 |     100% |           |
+| hello/advertizer.py   |       83 |        0 |       10 |        0 |     100% |           |
 | hello/api.py          |       58 |        0 |        2 |        0 |     100% |           |
-| hello/discoverer.py   |      125 |        0 |       22 |        0 |     100% |           |
+| hello/discoverer.py   |      120 |        0 |       22 |        0 |     100% |           |
 | hello/group.py        |       23 |        0 |        0 |        0 |     100% |           |
-| hello/receiver.py     |       70 |        0 |        8 |        0 |     100% |           |
-| hello/scheduler.py    |       36 |        0 |        0 |        0 |     100% |           |
-| hello/sender.py       |       58 |        0 |       14 |        0 |     100% |           |
+| hello/receiver.py     |       67 |        0 |        8 |        0 |     100% |           |
+| hello/scheduler.py    |       33 |        0 |        0 |        0 |     100% |           |
+| hello/sender.py       |       56 |        0 |       14 |        0 |     100% |           |
 | hello/service.py      |       22 |        0 |        0 |        0 |     100% |           |
-| **TOTAL**             |  **485** |    **0** |   **56** |    **0** | **100%** |           |
+| **TOTAL**             |  **470** |    **0** |   **56** |    **0** | **100%** |           |
 
 
 ## Setup coverage badge
